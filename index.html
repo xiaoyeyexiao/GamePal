@@ -245,7 +245,8 @@
   }
   .score-row.dragging { transition: none; }
   .score-row .rank { font-size: 12px; font-weight: 800; color: #cdbba6; width: 18px; text-align: center; flex: none; }
-  .score-row .pname { flex: 1; min-width: 0; font-weight: 700; color: #6b4a2e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .score-row .pname { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; line-height: 1.2; }
+  .score-row .pname .pn { font-weight: 700; color: #6b4a2e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .score-row .pscore {
     font-size: 20px; font-weight: 800; color: #b35c1e;
     min-width: 58px; text-align: center; cursor: pointer;
@@ -300,14 +301,206 @@
     height: 34px; padding: 0 14px; border-radius: 10px; border: 1.5px solid #e0b98a; flex: none;
     background: #fff; color: #8a6a50; font-weight: 700; font-size: 13px; cursor: pointer;
   }
-  .sp-hint {
-    background: #fff8ef; border: 1.5px dashed #e0b98a; border-radius: 12px;
-    padding: 9px 12px; margin: 4px 0 10px;
-    font-size: 12.5px; color: #a0785a; line-height: 1.8;
+  /* 计分方法：可折叠说明 */
+  .sp-hint-wrap { margin: 4px 0 10px; }
+  .sp-hint-toggle {
+    width: 100%; display: flex; align-items: center; gap: 8px;
+    background: #fff8ef; border: 1.5px solid #e0b98a; border-radius: 12px;
+    padding: 8px 12px; font-family: inherit; font-size: 13px; font-weight: 700;
+    color: #a0785a; cursor: pointer; text-align: left;
+    transition: border-radius .2s ease;
   }
-  .sp-hint b { color: #b35c1e; }
+  .sp-hint-wrap.open .sp-hint-toggle { border-radius: 12px 12px 0 0; }
+  .sp-hint-toggle .q {
+    width: 18px; height: 18px; border-radius: 50%; flex: none;
+    background: #ffe3c2; color: #b35c1e; font-size: 12px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .sp-hint-toggle .t { flex: 1; min-width: 0; }
+  .sp-hint-toggle .t small { font-weight: 600; font-size: 11.5px; color: #c0a488; margin-left: 6px; }
+  .sp-hint-toggle .arw { font-size: 11px; color: #cdbba6; transition: transform .2s ease; }
+  .sp-hint-wrap.open .sp-hint-toggle .arw { transform: rotate(180deg); }
+  .sp-hint-body {
+    display: grid; grid-template-rows: 0fr; opacity: 0;
+    transition: grid-template-rows .26s ease, opacity .18s ease;
+  }
+  .sp-hint-wrap.open .sp-hint-body { grid-template-rows: 1fr; opacity: 1; }
+  .sp-hint-inner { overflow: hidden; }
+  .sp-hint-inner .box {
+    background: #fff8ef; border: 1.5px solid #e0b98a; border-top: none;
+    border-radius: 0 0 12px 12px; margin-top: -1.5px;
+    padding: 4px 14px 12px;
+    font-size: 12.5px; color: #a0785a; line-height: 1.75;
+  }
+  .sp-hint-inner ol { margin: 0; padding-left: 18px; }
+  .sp-hint-inner li { margin: 5px 0; }
+  .sp-hint-inner b { color: #b35c1e; }
+
+  /* 玩家配色：颜色跟着玩家走，不随排序变化 */
+  .pc-0 { --pc-bg: #fff6e8; --pc-bd: #e8b980; --pc-ink: #a45a12; --pc-btn: #ffe1bd; }
+  .pc-1 { --pc-bg: #eef8f0; --pc-bd: #93c9a4; --pc-ink: #2f7a4b; --pc-btn: #cfe9d8; }
+  .pc-2 { --pc-bg: #edf4fc; --pc-bd: #8fb8dd; --pc-ink: #2b6495; --pc-btn: #d3e4f6; }
+  .pc-3 { --pc-bg: #f4eefb; --pc-bd: #b49ad8; --pc-ink: #69499a; --pc-btn: #e2d5f4; }
+  .pc-4 { --pc-bg: #fdeef1; --pc-bd: #e2a0ae; --pc-ink: #a8475b; --pc-btn: #f9d6de; }
+  .pc-5 { --pc-bg: #fdf7e2; --pc-bd: #dcc379; --pc-ink: #8a6a12; --pc-btn: #f4e8c2; }
+  .pc-6 { --pc-bg: #e8f7f6; --pc-bd: #85c8c4; --pc-ink: #1f706c; --pc-btn: #c9ebea; }
+  .pc-7 { --pc-bg: #f2ece6; --pc-bd: #c0ae9b; --pc-ink: #6b5a49; --pc-btn: #e0d5c8; }
+  .score-row {
+    background: var(--pc-bg, #fff8ef);
+    border-color: var(--pc-bd, #e0b98a);
+  }
+  .score-row .pname .pn { color: var(--pc-ink, #6b4a2e); }
+  .score-row .rank { color: var(--pc-bd, #cdbba6); }
+  .score-row .rank.top { color: var(--pc-ink, #b35c1e); }
+  .score-row .pscore { color: var(--pc-ink, #b35c1e); border-bottom-color: var(--pc-bd, #e0b98a); }
+  .score-row .pbtn { background: var(--pc-btn, #ffe3c2); color: var(--pc-ink, #b35c1e); }
+  .score-row .pbtn:active { background: var(--pc-ink, #ff8a3d); color: #fff; }
+
+  /* 加减分后浮出的变化值，帮助确认点到的是谁 */
+  .delta-pop {
+    position: absolute; right: 58px; top: 14px; pointer-events: none;
+    font-size: 14px; font-weight: 800; letter-spacing: .3px;
+    animation: deltaUp .75s ease-out forwards;
+  }
+  .delta-pop.plus { color: #cf4b28; }
+  .delta-pop.minus { color: #4a7a63; }
+  @keyframes deltaUp {
+    0%   { opacity: 0; transform: translateY(6px) scale(.9); }
+    30%  { opacity: 1; transform: translateY(0) scale(1.06); }
+    100% { opacity: 0; transform: translateY(-12px) scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .delta-pop { animation-duration: .01s; }
+    .sp-hint-body { transition: none; }
+  }
   .sp-toolbar { display: flex; gap: 8px; margin-top: 12px; }
   .sp-toolbar .t-btn { flex: 1; padding: 10px 0; font-size: 14px; }
+
+  /* ===== 回合 / 撤销 ===== */
+  /* 计分范围条：贴在分数列表正上方，明确“现在看的是哪一回合 / 是否累计” */
+  .sp-scope {
+    background: #fff8ef; border: 1.5px solid #e9cfab;
+    border-radius: 14px; padding: 10px 12px 12px;
+    margin: 2px 0 10px;
+    transition: background .2s ease, border-color .2s ease;
+  }
+  .sp-scope .round-bar { gap: 8px; }
+  .sp-scope .round-label b { font-size: 16px; }
+  .scope-row { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+  .scope-row .presets-inline { flex: 1; flex-wrap: nowrap; }
+  .scope-row .preset { padding: 5px 10px; }
+  .scope-btn {
+    flex: none; height: 30px; padding: 0 9px; border-radius: 9px;
+    border: 1.5px solid #e0b98a; background: #fff; color: #8a6a50;
+    font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .scope-btn:active { background: #ffe3c2; }
+  .scope-btn:disabled { opacity: .35; }
+
+  /* 累计总分视图：冷调浅灰蓝，和玩家那 8 个暖色/彩色系都不同；
+     比本回合的暖橙更“冷静”，但不用深色，整体依然是浅色界面 */
+  .sp-scope.total-mode {
+    background: #e9edf3; border-color: #b9c2d1;
+  }
+  .sp-scope.total-mode .round-label b { color: #46506a; }
+  .sp-scope.total-mode .round-label small { color: #7d879e; }
+  .sp-scope.total-mode .mini-btn { background: #d6dee9; color: #46506a; }
+  .sp-scope.total-mode .mini-btn:active { background: #c3cddc; }
+  .sp-scope.total-mode .mini-btn:disabled { opacity: .35; }
+  .sp-scope.total-mode .scope-btn {
+    background: #fff; border-color: #b9c2d1; color: #5a6478;
+  }
+  .sp-scope.total-mode .scope-btn:active { background: #dfe5ee; }
+  .sp-scope.total-mode .preset {
+    background: #fff; border-color: #b9c2d1; color: #6a7488;
+  }
+  .sp-scope.total-mode .preset.on { background: #5f6b82; border-color: #5f6b82; color: #fff; }
+  .sp-scope.total-mode #dispHint { color: #7d879e; }
+
+  /* 分数表头：让“这是哪一回合的分数”直接长在列标题上 */
+  .sp-thead {
+    display: flex; align-items: center;
+    padding: 0 53px 0 10px; margin: 2px 0 6px;
+    font-size: 11px; font-weight: 700; color: #b09070;
+  }
+  .sp-thead .th-name { letter-spacing: .5px; opacity: .8; }
+  .sp-thead .th-score {
+    margin-left: auto; padding: 3px 9px; border-radius: 999px;
+    background: #ffe3c2; color: #a45a12; white-space: nowrap;
+  }
+  .sp-thead .th-score.total { background: #d6dee9; color: #46506a; }
+  /* 累计视图不能直接改分，去掉“可编辑”的虚线下划线 */
+  .score-list.total-mode .pscore { border-bottom-color: transparent; }
+
+  .round-bar { display: flex; align-items: center; gap: 10px; }
+  .round-label { flex: 1; text-align: center; display: flex; flex-direction: column; line-height: 1.3; }
+  .round-label b { font-size: 17px; color: #b35c1e; }
+  .round-label small { font-size: 11px; color: #b09070; margin-top: 2px; }
+  .t-btn:disabled, .mini-btn:disabled { opacity: .35; }
+  .t-btn:disabled:active, .mini-btn:disabled:active { transform: none; }
+
+  /* ===== 悬浮计时条 ===== */
+  #miniTimer {
+    position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%);
+    width: calc(100% - 24px); max-width: 480px;
+    display: none; align-items: center; gap: 10px;
+    padding: 9px 12px 9px 16px;
+    background: rgba(58, 46, 42, .95);
+    color: #fff; border-radius: 999px;
+    box-shadow: 0 8px 24px rgba(60, 30, 10, .35);
+    backdrop-filter: blur(6px); z-index: 60;
+    cursor: pointer;
+  }
+  #miniTimer.on { display: flex; }
+  #miniTimer .mt-phase {
+    font-size: 12px; opacity: .72; max-width: 38%; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    flex: 0 1 auto;
+  }
+  #miniTimer .mt-time {
+    margin-left: auto; font-size: 19px; font-weight: 800;
+    font-variant-numeric: tabular-nums; letter-spacing: 0;
+    white-space: nowrap; flex: none;
+  }
+  #miniTimer .mt-time.urgent { color: #ff9a8a; }
+  #miniTimer .mt-btn {
+    flex: none; border: none; border-radius: 999px; padding: 7px 14px;
+    background: rgba(255, 255, 255, .18); color: #fff;
+    font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer;
+  }
+  #miniTimer .mt-btn:active { background: rgba(255, 255, 255, .3); }
+  body.mini-open { padding-bottom: 96px; }
+
+  /* ===== 全屏计时 ===== */
+  #fsTimer {
+    position: fixed; inset: 0; z-index: 200;
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 24px; text-align: center; user-select: none;
+    background: radial-gradient(circle at 50% 30%, #3d2c22 0%, #221812 100%);
+    color: #ffe9cf;
+  }
+  #fsTimer.on { display: flex; }
+  #fsPhase {
+    font-size: clamp(15px, 3.4vmin, 30px);
+    color: #d8b795; letter-spacing: 3px; margin-bottom: 2vmin;
+  }
+  #fsTime {
+    font-size: clamp(72px, 24vmin, 320px);
+    font-weight: 800; line-height: 1;
+    font-variant-numeric: tabular-nums; letter-spacing: .5vmin;
+  }
+  #fsTime.urgent { color: #ff8a75; animation: pulse .5s infinite alternate; }
+  #fsBtns { display: flex; gap: 12px; margin-top: 5vmin; flex-wrap: wrap; justify-content: center; }
+  .fs-btn {
+    padding: 14px 28px; border: none; border-radius: 999px;
+    background: linear-gradient(135deg, #ff8a3d, #ff5e7e); color: #fff;
+    font-size: clamp(14px, 2.2vmin, 18px); font-weight: 800;
+    font-family: inherit; cursor: pointer;
+    box-shadow: 0 6px 18px rgba(255, 100, 80, .3);
+  }
+  .fs-btn.ghost { background: rgba(255, 255, 255, .13); box-shadow: none; color: #ffe9cf; }
+  .fs-btn:active { transform: scale(.96); }
 </style>
 </head>
 <body data-page-node-id="BGrz7Np0DlGTuhBzkDzrmT">
@@ -373,6 +566,14 @@
       </div>
     </div>
     <div class="relay-hint" style="margin:-2px 0 10px">剩设定秒数时响一声提示音；归零时结束音 + 语音「时间到」。</div>
+    <div class="cfg-row">
+      <span class="cfg-label">屏幕常亮</span>
+      <div class="presets-inline" id="wlSeg">
+        <span class="preset on" data-wl="1">开启（防自动熄屏）</span>
+        <span class="preset" data-wl="0">关闭</span>
+      </div>
+    </div>
+    <div class="relay-hint" id="wlHint" style="margin:-2px 0 10px">计时期间保持屏幕不熄，方便随时看剩余时间。</div>
   </div>
 
   <!-- 普通模式配置 -->
@@ -442,6 +643,7 @@
     <button class="t-btn" id="timerMain">开始</button>
     <button class="t-btn ghost" id="timerSkip" style="display:none">跳过</button>
     <button class="t-btn ghost" id="timerReset" style="display:none">重置</button>
+    <button class="t-btn ghost" id="timerFull" style="display:none">⛶ 全屏</button>
   </div>
 </div>
 </div><!-- /timerSection -->
@@ -469,33 +671,95 @@
       <span class="preset" data-step="10">±10</span>
     </div>
   </div>
-  <div class="sp-hint">
-    <b>计分方法：</b><br>
-    1. 选一个常用步长（±1 / ±5 / ±10），点玩家行的 − ＋ 即按该步长加减；<br>
-    2. 再点一次选中的步长可取消选中，此后点 − ＋ 会在该行出现输入框，输入本次加减的分值；<br>
-    3. 点玩家的分数数字，可直接输入准确分数（含负数）；<br>
-    4. 向左滑动玩家行，点露出的红色「删除」可移除玩家。
+  <div class="sp-hint-wrap" id="spHintWrap">
+    <button class="sp-hint-toggle" id="spHintBtn" type="button" aria-expanded="false" aria-controls="spHintBody">
+      <span class="q">?</span>
+      <span class="t">计分方法<small>点这里展开说明</small></span>
+      <span class="arw">▾</span>
+    </button>
+    <div class="sp-hint-body" id="spHintBody">
+      <div class="sp-hint-inner">
+        <div class="box">
+          <ol>
+            <li>选一个常用步长（±1 / ±5 / ±10），点玩家行的 − ＋ 即按该步长加减；再点一次可取消选中，此后点 − ＋ 会在该行出现输入框，输入本次加减的分值。</li>
+            <li>点玩家的分数数字，可直接输入准确分数（含负数）。</li>
+            <li>向左滑动玩家行，点露出的红色「删除」可移除玩家。</li>
+            <li>多回合游戏用下方「计分范围」切换 / 新增回合，每回合独立记分；切到「累计总分」可看总和。</li>
+            <li>点错了用「撤销」退回上一步，「前进」恢复。</li>
+            <li><b>玩家顺序默认固定</b>，加减分不会跳动；想按分数排，把「玩家顺序」切成「按分降序 / 升序」。</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 计分范围：回合 + 显示模式，紧贴分数列表，避免“看的到底是哪一回合” -->
+  <div class="sp-scope" id="roundCard">
+    <div class="round-bar">
+      <button class="mini-btn" id="rPrev" title="上一回合">◀</button>
+      <div class="round-label">
+        <b id="roundNow">第 1 回合</b>
+        <small id="roundSub">共 1 回合</small>
+      </div>
+      <button class="mini-btn" id="rNext" title="下一回合">▶</button>
+    </div>
+    <div class="scope-row">
+      <div class="presets-inline" id="dispSeg">
+        <span class="preset on" data-disp="round">本回合</span>
+        <span class="preset" data-disp="total">累计总分</span>
+      </div>
+      <button class="scope-btn" id="rAdd">＋ 回合</button>
+      <button class="scope-btn" id="rDel">删除</button>
+    </div>
+    <div class="relay-hint" id="dispHint" style="margin-top:6px">只有 1 个回合时，「本回合」与「累计总分」相同。</div>
+  </div>
+
+  <div class="sp-thead">
+    <span class="th-name">玩家</span>
+    <span class="th-score" id="thScore">第 1 回合</span>
   </div>
 
   <div class="score-list" id="spList"></div>
 
   <div class="cfg-row" style="margin-top:12px">
-    <span class="cfg-label">排序方式</span>
+    <span class="cfg-label">玩家顺序</span>
     <div class="presets-inline" id="spSortSeg">
-      <span class="preset" data-order="asc">↑ 升序（低→高）</span>
-      <span class="preset on" data-order="desc">↓ 降序（高→低）</span>
+      <span class="preset on" data-order="lock">🔒 位置固定</span>
+      <span class="preset" data-order="desc">↓ 按分降序</span>
+      <span class="preset" data-order="asc">↑ 按分升序</span>
     </div>
   </div>
+  <div class="relay-hint" id="sortHint">位置固定：加减分时玩家行不会移动，手指可以连续点同一处。</div>
 
   <div class="sp-toolbar">
-    <button class="t-btn ghost" id="spZero">全部清零</button>
-    <button class="t-btn ghost" id="spClear">全部清空</button>
+    <button class="t-btn ghost" id="spUndo">↶ 撤销</button>
+    <button class="t-btn ghost" id="spRedo">↷ 前进</button>
+  </div>
+  <div class="sp-toolbar">
+    <button class="t-btn ghost" id="spZero">本回合清零</button>
+    <button class="t-btn ghost" id="spClear">清空玩家</button>
   </div>
 </div>
 </div><!-- /scoreSection -->
 
+<div id="miniTimer">
+  <span class="mt-phase" id="mtPhase">第 1 轮</span>
+  <span class="mt-time" id="mtTime">00:00.00</span>
+  <button class="mt-btn" id="mtToggle">暂停</button>
+</div>
+
+<div id="fsTimer">
+  <div id="fsPhase">第 1 轮</div>
+  <div id="fsTime">00:00</div>
+  <div id="fsBtns">
+    <button class="fs-btn" id="fsMain">暂停</button>
+    <button class="fs-btn ghost" id="fsSkip">跳过</button>
+    <button class="fs-btn ghost" id="fsExit">退出全屏</button>
+  </div>
+</div>
+
 <div id="flash"></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#cdbba6;margin-top:6px;user-select:none">版本 v9 · 10/27</div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#cdbba6;margin-top:6px;user-select:none">版本 v12 · 10/29</div>
 
 <script src="words.js"></script>
 <script>
@@ -517,14 +781,9 @@
       chip.className = 'cat-chip' + (selected.has(cat) ? ' on' : '');
       chip.innerHTML = cat + '<span class="cnt">' + WORD_BANK[cat].length + '</span>';
       chip.onclick = () => {
-        // 关键修复：如果当前是"全选"状态，点某个分类 = 只选这一个
-        // （此时用户意图几乎总是"我就要这个分类"，而不是"取消它"）
-        if (selected.size === allCats.length && selected.has(cat)) {
-          selected.clear();
-          selected.add(cat);
-        } else {
-          selected.has(cat) ? selected.delete(cat) : selected.add(cat);
-        }
+        // 点一下切换：选中 → 取消；未选 → 选中。
+        // 全选状态下点某个分类 = 只取消它（不再变成"只选这一个"）
+        selected.has(cat) ? selected.delete(cat) : selected.add(cat);
         renderCats();
       };
       catsBox.appendChild(chip);
@@ -626,6 +885,10 @@
   let tState = 'idle';         // idle | running | paused | between | done
   const cfg = { rounds: 3, roundSec: 60, players: 6, drawSec: 60, guessSec: 30, alertSec: 10 };
   let phases = [], pi = 0, remainMs = 0, lastTs = 0, rafId = null, gen = 0, alertFired = false;
+  let curSection = 'draw';      // draw | timer | score
+  let fsOn = false;             // 全屏计时层是否展开
+  let wakeWanted = true;        // 屏幕常亮开关（默认开）
+  let wakeLock = null;
 
   const tagIcon = { '画图': '🎨', '猜词': '💬', '选词': '📝', '画 & 猜': '🎨' };
   const keyValId = { rounds: 'rVal', roundSec: 'rsVal', players: 'pVal', drawSec: 'dVal', guessSec: 'gVal' };
@@ -779,6 +1042,13 @@
     return String(m).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0') + '.' + String(cs).padStart(2, '0');
   }
 
+  // 全屏大字用：只显示 分:秒（向上取整，开局显示 01:00）
+  function fmtFs(ms) {
+    ms = Math.max(0, ms);
+    const s = Math.ceil(ms / 1000), m = Math.floor(s / 60);
+    return String(m).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+  }
+
   function renderDots() {
     const box = $t('phaseDots');
     box.innerHTML = '';
@@ -793,13 +1063,20 @@
   function renderPhase() {
     renderDots();
     const p = phases[pi];
-    $t('phaseTitle').textContent = p.title + ' · ' + tagIcon[p.tag] + ' ' + p.tag;
+    const label = p.title + ' · ' + tagIcon[p.tag] + ' ' + p.tag;
+    $t('phaseTitle').textContent = label;
+    $t('fsPhase').textContent = label;
   }
 
   function renderTime() {
+    const urgent = tState === 'running' && remainMs <= 5000 && remainMs > 0;
     const el = $t('timerDisplay');
     el.textContent = fmt(remainMs);
-    el.classList.toggle('urgent', tState === 'running' && remainMs <= 5000 && remainMs > 0);
+    el.classList.toggle('urgent', urgent);
+    const fsEl = $t('fsTime');
+    fsEl.textContent = fmtFs(remainMs);
+    fsEl.classList.toggle('urgent', urgent);
+    updateMini();
   }
 
   function setState(s) {
@@ -810,10 +1087,13 @@
       main.textContent = '开始';
       $t('timerSkip').style.display = 'none';
       $t('timerReset').style.display = 'none';
+      $t('timerFull').style.display = 'none';
       $t('runArea').style.display = 'none';
       $t('cfgCommon').style.display = 'block';
       $t(tMode === 'normal' ? 'cfgNormal' : 'cfgRelay').style.display = 'block';
       document.querySelector('.mode-tabs').style.display = 'flex';
+      closeFs();
+      releaseWake();
     } else {
       $t('runArea').style.display = 'block';
       $t('cfgCommon').style.display = 'none';
@@ -821,12 +1101,97 @@
       $t('cfgRelay').style.display = 'none';
       document.querySelector('.mode-tabs').style.display = 'none';
       $t('timerReset').style.display = 'block';
+      $t('timerFull').style.display = 'block';
       $t('timerSkip').style.display = (s === 'running' || s === 'paused') ? 'block' : 'none';
       if (s === 'running') main.textContent = '暂停';
       else if (s === 'paused') main.textContent = '继续';
       else if (s === 'between') main.textContent = (pi < phases.length - 1) ? '开始下一阶段 ▶' : '查看结果 ▶';
       else if (s === 'done') main.textContent = '再来一局';
+      // 屏幕常亮：计时中保持，结束后释放
+      if (s === 'done') releaseWake(); else requestWake();
     }
+    // 全屏层按钮同步
+    $t('fsMain').textContent = s === 'running' ? '暂停'
+      : s === 'paused' ? '继续'
+      : s === 'between' ? ((pi < phases.length - 1) ? '下一阶段 ▶' : '查看结果 ▶')
+      : '再来一局';
+    $t('fsSkip').style.display = (s === 'running' || s === 'paused') ? 'block' : 'none';
+    updateMini();
+  }
+
+  // ---- 屏幕常亮（Wake Lock）----
+  let wakePending = false;
+  async function requestWake() {
+    if (!wakeWanted || !('wakeLock' in navigator) || wakeLock || wakePending) return;
+    wakePending = true;
+    try {
+      const l = await navigator.wakeLock.request('screen');
+      // 申请期间可能已经暂停/退出，此时直接释放，避免留下野锁
+      if (!wakeWanted || tState === 'idle' || tState === 'done') {
+        try { l.release(); } catch (e) {}
+        wakePending = false;
+        return;
+      }
+      wakeLock = l;
+      l.addEventListener('release', () => { wakeLock = null; });
+    } catch (e) {
+      wakeLock = null;
+    }
+    wakePending = false;
+  }
+  function releaseWake() {
+    if (!wakeLock) return;
+    try { wakeLock.release(); } catch (e) {}
+    wakeLock = null;
+  }
+  // 页面重新可见时（切后台回来）浏览器会回收锁，需要重新申请
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && tState === 'running') requestWake();
+  });
+
+  document.querySelectorAll('#wlSeg .preset').forEach(chip => {
+    chip.onclick = () => {
+      wakeWanted = chip.dataset.wl === '1';
+      document.querySelectorAll('#wlSeg .preset').forEach(x => x.classList.toggle('on', x === chip));
+      if (wakeWanted) { if (tState === 'running') requestWake(); }
+      else releaseWake();
+    };
+  });
+  if (!('wakeLock' in navigator)) {
+    $t('wlHint').textContent = '当前浏览器不支持屏幕常亮（iPhone 需 iOS 16.4+，或改用 Chrome / Edge）。';
+  }
+
+  // ---- 全屏计时 ----
+  function openFs() {
+    if (tState === 'idle') return;
+    fsOn = true;
+    $t('fsTimer').classList.add('on');
+    if (tState === 'running' || tState === 'paused') renderPhase();
+    else if (tState === 'done') $t('fsPhase').textContent = '🎉 游戏结束！';
+    renderTime();
+    updateMini();
+  }
+  function closeFs() {
+    fsOn = false;
+    $t('fsTimer').classList.remove('on');
+    updateMini();
+  }
+
+  // ---- 悬浮计时条 ----
+  function updateMini() {
+    const show = tState !== 'idle' && curSection !== 'timer' && !fsOn;
+    $t('miniTimer').classList.toggle('on', show);
+    document.body.classList.toggle('mini-open', show);
+    if (!show) return;
+    const p = phases[pi];
+    $t('mtPhase').textContent = tState === 'between' ? '⏰ 时间到' : (p ? p.title : '计时中');
+    const t = $t('mtTime');
+    t.textContent = fmt(remainMs);          // 与主界面一致：分:秒.毫秒
+    t.classList.toggle('urgent', tState === 'running' && remainMs <= 5000 && remainMs > 0);
+    $t('mtToggle').textContent = tState === 'running' ? '暂停'
+      : tState === 'paused' ? '继续'
+      : tState === 'between' ? ((pi < phases.length - 1) ? '下一阶段' : '看结果')
+      : '再来一局';
   }
 
   // ---- 声音与闪屏 ----
@@ -925,6 +1290,7 @@
     // 「时间到」优先级最高：掐掉未说完的倒数播报，必完整播出
     setTimeout(() => speak('时间到', true), 780);
     $t('phaseTitle').textContent = '⏰ 时间到！';
+    $t('fsPhase').textContent = '⏰ 时间到！';
     setState('between');
   }
 
@@ -932,13 +1298,16 @@
     cancelSpeech();
     setState('done');
     $t('phaseTitle').textContent = '🎉 游戏结束！';
+    $t('fsPhase').textContent = '🎉 游戏结束！';
     $t('timerDisplay').textContent = '00:00.00';
     $t('timerDisplay').classList.remove('urgent');
+    $t('fsTime').textContent = '00:00';
+    $t('fsTime').classList.remove('urgent');
+    updateMini();
   }
 
   // ---- 按钮 ----
-  $t('timerMain').onclick = () => {
-    ensureAudio();
+  function onMain() {
     if (tState === 'idle') {
       gen++;
       syncInputs();              // 以输入框里显示的数字为准，避免用到旧配置
@@ -946,6 +1315,7 @@
     } else if (tState === 'running') {
       cancelAnimationFrame(rafId);
       $t('timerDisplay').classList.remove('urgent');
+      $t('fsTime').classList.remove('urgent');
       setState('paused');
     } else if (tState === 'paused') {
       setState('running');
@@ -959,16 +1329,28 @@
       gen++;
       pi = 0; startPhase();
     }
-  };
+  }
 
-  $t('timerSkip').onclick = () => {
+  function onSkip() {
     if (tState !== 'running' && tState !== 'paused') return;
     gen++;
     cancelSpeech();
     cancelAnimationFrame(rafId);
     if (pi < phases.length - 1) { pi++; startPhase(); }
     else finish();
-  };
+  }
+
+  $t('timerMain').onclick = () => { ensureAudio(); onMain(); };
+  $t('fsMain').onclick = () => { ensureAudio(); onMain(); };
+  $t('mtToggle').onclick = e => { e.stopPropagation(); ensureAudio(); onMain(); };
+  $t('timerSkip').onclick = () => onSkip();
+  $t('fsSkip').onclick = () => onSkip();
+  $t('timerFull').onclick = () => openFs();
+  $t('fsExit').onclick = () => closeFs();
+  // 全屏时点大数字 = 暂停 / 继续，方便手机平放在桌上时操作
+  $t('fsTime').onclick = () => { if (tState === 'running' || tState === 'paused') onMain(); };
+  // 点悬浮条空白处 → 跳回计时器页面
+  $t('miniTimer').onclick = () => showSection('timer');
 
   $t('timerReset').onclick = () => {
     gen++;
@@ -991,10 +1373,12 @@
 
   // ---- 主页签：抽词器 / 计时器 切换 ----
   function showSection(sec) {
+    curSection = sec;
     document.querySelectorAll('.main-tab').forEach(x => x.classList.toggle('on', x.dataset.sec === sec));
     $t('drawSection').style.display = sec === 'draw' ? 'block' : 'none';
     $t('timerSection').style.display = sec === 'timer' ? 'block' : 'none';
     $t('scoreSection').style.display = sec === 'score' ? 'block' : 'none';
+    updateMini();
   }
   document.querySelectorAll('.main-tab').forEach(tab => {
     tab.onclick = () => showSection(tab.dataset.sec);
@@ -1005,11 +1389,17 @@
   window.scrollTo(0, 0);
 
   // ===== 计分板 =====
-  let players = [];            // { name, score }
+  let players = [];            // { name, scores: [...], color: 0-7, pos: 固定位次 }
+  let roundCount = 1;          // 回合总数
+  let curRound = 0;            // 当前回合（下标）
+  let dispMode = 'round';      // round = 本回合 / total = 累计
   let scoreStep = 1;           // null = 未选步长（点 ± 时就地输入）
-  let scoreDesc = true;        // true: 高→低, false: 低→高
+  // lock = 玩家行位置固定（默认，避免加减分后重排导致点错人）
+  // desc = 每步都按分数高→低重排 / asc = 低→高
+  let sortMode = 'lock';
   let spPending = null;        // { idx, sign } 就地输入本次加减分
   let spOpenIdx = null;        // 左滑展开删除按钮的玩家下标
+  let history = [], hIndex = -1;   // 撤销 / 前进
 
   const DEL_W = 76;            // 删除按钮宽度
 
@@ -1021,7 +1411,7 @@
     const delBtn = document.createElement('button');
     delBtn.className = 'swipe-del'; delBtn.textContent = '删除';
     delBtn.title = '移除该玩家';
-    delBtn.onclick = () => { players.splice(idx, 1); spOpenIdx = null; spPending = null; renderPlayers(); };
+    delBtn.onclick = () => { players.splice(idx, 1); spOpenIdx = null; spPending = null; renderPlayers(); recordState(); };
 
     // 初始位置：该行处于展开态则停在左侧
     const baseX = (spOpenIdx === idx) ? -DEL_W : 0;
@@ -1079,27 +1469,140 @@
     return m ? parseInt(m[0], 10) : fallback;
   }
 
+  // ---- 回合辅助 ----
+  function padRounds() {
+    players.forEach(p => {
+      if (!Array.isArray(p.scores)) p.scores = [];
+      while (p.scores.length < roundCount) p.scores.push(0);
+      if (p.scores.length > roundCount) p.scores.length = roundCount;
+    });
+  }
+  function roundScore(p) { return p.scores[curRound] || 0; }
+  function totalScore(p) { return p.scores.reduce((a, b) => a + b, 0); }
+  function shownScore(p) { return dispMode === 'total' ? totalScore(p) : roundScore(p); }
+
+  function renderRoundBar() {
+    const isTotal = dispMode === 'total';
+    $t('roundNow').textContent = '第 ' + (curRound + 1) + ' 回合';
+    const sum = players.reduce((a, p) => a + totalScore(p), 0);
+    $t('roundSub').textContent = '共 ' + roundCount + ' 回合 · 合计 ' + sum + ' 分';
+    $t('rPrev').disabled = curRound <= 0;
+    $t('rNext').disabled = curRound >= roundCount - 1;
+    $t('rDel').disabled = roundCount <= 1;
+
+    // 表头直接标注当前口径，并把整块计分范围换成对应配色
+    const th = $t('thScore');
+    th.textContent = isTotal ? 'Σ 累计总分' : '第 ' + (curRound + 1) + ' 回合';
+    th.classList.toggle('total', isTotal);
+    $t('roundCard').classList.toggle('total-mode', isTotal);
+    $t('spList').classList.toggle('total-mode', isTotal);
+
+    $t('dispHint').textContent = roundCount > 1
+      ? (isTotal
+          ? '累计视图：分数为所有回合之和，不可直接修改。'
+          : '正在记第 ' + (curRound + 1) + ' 回合的分，可左右切换回合。')
+      : '只有 1 个回合，「本回合」与「累计总分」数值相同。';
+  }
+
+  // ---- 撤销 / 前进 ----
+  function snapshot() {
+    return JSON.stringify({
+      players: players.map(p => ({ name: p.name, scores: p.scores.slice(), color: p.color, pos: p.pos })),
+      roundCount, curRound
+    });
+  }
+  function recordState() {
+    const s = snapshot();
+    if (hIndex >= 0 && history[hIndex] === s) return;
+    history = history.slice(0, hIndex + 1);
+    history.push(s);
+    if (history.length > 100) history.shift();
+    hIndex = history.length - 1;
+    updateUndoBtns();
+  }
+  function restoreState(s) {
+    const d = JSON.parse(s);
+    players = d.players;
+    roundCount = d.roundCount;
+    curRound = Math.min(d.curRound || 0, roundCount - 1);
+    spPending = null; spOpenIdx = null;
+    renderPlayers();
+  }
+  function updateUndoBtns() {
+    $t('spUndo').disabled = hIndex <= 0;
+    $t('spRedo').disabled = hIndex >= history.length - 1;
+  }
+
+  // ---- 玩家配色 / 固定位次 ----
+  const PALETTE_N = 8;
+  // 选一个当前没被占用的颜色，保证同时在场的人颜色不撞
+  function nextColor() {
+    const used = new Set(players.map(p => p.color));
+    for (let c = 0; c < PALETTE_N; c++) if (!used.has(c)) return c;
+    return players.length % PALETTE_N;
+  }
+  // 老数据、撤销恢复的分支可能缺 color/pos，补齐后再渲染
+  function ensureMeta() {
+    let maxPos = -1;
+    players.forEach(p => { if (typeof p.pos === 'number') maxPos = Math.max(maxPos, p.pos); });
+    players.forEach(p => {
+      if (typeof p.color !== 'number') p.color = nextColor();
+      if (typeof p.pos !== 'number') p.pos = ++maxPos;
+    });
+  }
+
   function renderPlayers() {
     const box = $t('spList');
     box.innerHTML = '';
-    $t('spCard').style.display = players.length ? 'block' : 'none';
+    const has = players.length > 0;
+    $t('spCard').style.display = has ? 'block' : 'none';
+    $t('roundCard').style.display = has ? 'block' : 'none';
+    ensureMeta();
+    padRounds();
+    renderRoundBar();
+    updateUndoBtns();
+    if (!has) return;
 
-    const sorted = players.map((p, i) => ({ p, i }))
-      .sort((a, b) => scoreDesc ? b.p.score - a.p.score : a.p.score - b.p.score);
+    const sorted = players.map((p, i) => ({ p, i }));
+    if (sortMode === 'lock') {
+      // 位置固定：按玩家自己的位次排，加减分不会改变行位置
+      sorted.sort((a, b) => a.p.pos - b.p.pos);
+    } else {
+      const dir = sortMode === 'asc' ? 1 : -1;
+      sorted.sort((a, b) => dir * (shownScore(a.p) - shownScore(b.p)) || a.p.pos - b.p.pos);
+    }
+    // 名次（第几名）始终按真实分数算，位置固定时也能一眼看出谁领先
+    const rankOf = new Map();
+    players.slice().sort((a, b) => shownScore(b) - shownScore(a))
+      .forEach((p, r) => rankOf.set(p, r + 1));
 
-    sorted.forEach(({ p, i }, rank) => {
+    sorted.forEach(({ p, i }) => {
+      const rank = rankOf.get(p) - 1;
       const row = document.createElement('div');
-      row.className = 'score-row';
+      row.className = 'score-row pc-' + (p.color % PALETTE_N);
+      row.dataset.pi = i;
 
       const rk = document.createElement('span');
-      rk.className = 'rank'; rk.textContent = rank + 1;
+      rk.className = 'rank' + (rank === 0 ? ' top' : '');
+      rk.textContent = rank + 1;
+      rk.title = '第 ' + (rank + 1) + ' 名';
+
       const nm = document.createElement('span');
-      nm.className = 'pname'; nm.textContent = p.name;
-      nm.title = p.name;
+      nm.className = 'pname';
+      const pn = document.createElement('span');
+      pn.className = 'pn'; pn.textContent = p.name; pn.title = p.name;
+      nm.appendChild(pn);
+      // 名字下方不再显示“另一个口径”的分数：数字列只有一种含义，
+      // 由列表上方的表头（第 N 回合 / Σ 累计总分）统一说明口径，避免看错
 
       const sc = document.createElement('span');
-      sc.className = 'pscore'; sc.textContent = p.score;
-      sc.onclick = () => { spPending = null; spOpenIdx = null; startEditScore(row, i); };
+      sc.className = 'pscore'; sc.textContent = shownScore(p);
+      if (dispMode === 'round') {
+        sc.onclick = () => { spPending = null; spOpenIdx = null; startEditScore(row, i); };
+      } else {
+        sc.style.cursor = 'default';
+        sc.title = '累计视图下不可直接修改，切回「本回合」再改';
+      }
 
 
       if (spPending && spPending.idx === i) {
@@ -1129,9 +1632,10 @@
         qok.className = 'sp-qok'; qok.textContent = '确认'; qok.title = '确认';
         const apply = () => {
           const v = parseIntAllowNeg(qin.value, null);
-          if (v !== null) p.score += spPending.sign * v;
+          if (v !== null) p.scores[curRound] = (p.scores[curRound] || 0) + spPending.sign * v;
           spPending = null;
           renderPlayers();
+          recordState();
         };
         qok.onclick = apply;
 
@@ -1177,25 +1681,45 @@
       spPending = { idx, sign };
       renderPlayers();
     } else {
-      players[idx].score += sign * scoreStep;
+      const delta = sign * scoreStep;
+      players[idx].scores[curRound] = (players[idx].scores[curRound] || 0) + delta;
       renderPlayers();
+      recordState();
+      flashDelta(idx, delta);
     }
   }
 
-  // 点击分数：就地变成输入框，可输入任意整数（含负数）
+  // 在该行浮出「+5 / -5」，让玩家确认加的是这一行
+  function flashDelta(idx, delta) {
+    const row = $t('spList').querySelector('.score-row[data-pi="' + idx + '"]');
+    if (!row || !delta) return;
+    const f = document.createElement('span');
+    f.className = 'delta-pop ' + (delta > 0 ? 'plus' : 'minus');
+    f.textContent = (delta > 0 ? '+' : '') + delta;
+    row.appendChild(f);
+    setTimeout(() => f.remove(), 800);
+  }
+
+  // 点击分数：就地变成输入框，可输入任意整数（含负数，仅本回合）
   function startEditScore(row, idx) {
     const old = row.querySelector('.pscore');
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'pscore-input';
-    input.value = players[idx].score;
+    const cur = players[idx].scores[curRound] || 0;
+    input.value = cur;
     row.replaceChild(input, old);
     input.focus();
     input.select();
     const commit = () => {
-      const v = parseIntAllowNeg(input.value, players[idx].score);
-      players[idx].score = v;
-      renderPlayers();
+      const v = parseIntAllowNeg(input.value, cur);
+      if (v !== (players[idx].scores[curRound] || 0)) {
+        players[idx].scores[curRound] = v;
+        renderPlayers();
+        recordState();
+      } else {
+        renderPlayers();
+      }
     };
     input.addEventListener('blur', commit);
     input.addEventListener('keydown', e => {
@@ -1210,11 +1734,16 @@
     let name = nameEl.value.trim();
     if (!name) name = '玩家' + (players.length + 1);
     const score = parseIntAllowNeg(initEl.value, 0);
-    players.push({ name, score });
+    const arr = new Array(roundCount).fill(0);
+    arr[curRound] = score;             // 初始分数记在当前回合
+    // 颜色取当前没被占用的；位次排在最后，切「位置固定」时按添加顺序显示
+    const maxPos = players.reduce((m, p) => Math.max(m, typeof p.pos === 'number' ? p.pos : -1), -1);
+    players.push({ name, scores: arr, color: nextColor(), pos: maxPos + 1 });
     nameEl.value = '';
     initEl.value = '0';
     spOpenIdx = null;
     renderPlayers();
+    recordState();
   };
   $t('spName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $t('spAdd').click(); } });
   $t('spInit').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $t('spAdd').click(); } });
@@ -1232,30 +1761,104 @@
     };
   });
 
-  // ---- 排序方式：升序 / 降序 二选一 ----
+  // ---- 玩家顺序：位置固定 / 按分降序 / 按分升序 ----
+  const SORT_HINT = {
+    lock: '位置固定：加减分时玩家行不会移动，手指可以连续点同一处。',
+    desc: '按分降序：每加一次分都可能重新排序，注意别点错行。',
+    asc: '按分升序：分数低的排前面，每加一次分都可能重新排序。'
+  };
   document.querySelectorAll('#spSortSeg .preset').forEach(chip => {
     chip.onclick = () => {
-      scoreDesc = chip.dataset.order === 'desc';
+      sortMode = chip.dataset.order;
       document.querySelectorAll('#spSortSeg .preset').forEach(x => x.classList.toggle('on', x === chip));
+      $t('sortHint').textContent = SORT_HINT[sortMode];
       spOpenIdx = null;
       renderPlayers();
     };
   });
 
-  // ---- 清零 / 清空 ----
+  // ---- 本回合清零 / 清空玩家 ----
   $t('spZero').onclick = () => {
     spOpenIdx = null;
-    players.forEach(p => p.score = 0);
+    players.forEach(p => { p.scores[curRound] = 0; });
     renderPlayers();
+    recordState();
   };
   $t('spClear').onclick = () => {
     players = [];
+    roundCount = 1;
+    curRound = 0;
     spPending = null;
     spOpenIdx = null;
     scoreStep = 1;
     document.querySelectorAll('#spSteps .preset').forEach(x => x.classList.toggle('on', x.dataset.step === '1'));
     renderPlayers();
+    recordState();
   };
+
+  // ---- 撤销 / 前进 ----
+  $t('spUndo').onclick = () => {
+    if (hIndex <= 0) return;
+    hIndex--;
+    restoreState(history[hIndex]);
+    updateUndoBtns();
+  };
+  $t('spRedo').onclick = () => {
+    if (hIndex >= history.length - 1) return;
+    hIndex++;
+    restoreState(history[hIndex]);
+    updateUndoBtns();
+  };
+
+  // ---- 回合切换 / 增删 ----
+  $t('rPrev').onclick = () => {
+    if (curRound <= 0) return;
+    curRound--; spPending = null; spOpenIdx = null;
+    renderPlayers();
+  };
+  $t('rNext').onclick = () => {
+    if (curRound >= roundCount - 1) return;
+    curRound++; spPending = null; spOpenIdx = null;
+    renderPlayers();
+  };
+  $t('rAdd').onclick = () => {
+    roundCount++;
+    curRound = roundCount - 1;
+    spPending = null; spOpenIdx = null;
+    renderPlayers();
+    recordState();
+  };
+  $t('rDel').onclick = () => {
+    if (roundCount <= 1) return;
+    players.forEach(p => p.scores.splice(curRound, 1));
+    roundCount--;
+    curRound = Math.min(curRound, roundCount - 1);
+    spPending = null; spOpenIdx = null;
+    renderPlayers();
+    recordState();
+  };
+
+  // ---- 显示：本回合 / 累计总分 ----
+  document.querySelectorAll('#dispSeg .preset').forEach(chip => {
+    chip.onclick = () => {
+      dispMode = chip.dataset.disp === 'total' ? 'total' : 'round';
+      document.querySelectorAll('#dispSeg .preset').forEach(x => x.classList.toggle('on', x === chip));
+      spPending = null; spOpenIdx = null;
+      renderPlayers();
+    };
+  });
+
+  // ---- 计分方法：默认收起，点了才展开 ----
+  $t('spHintBtn').onclick = () => {
+    const wrap = $t('spHintWrap');
+    const open = !wrap.classList.contains('open');
+    wrap.classList.toggle('open', open);
+    $t('spHintBtn').setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+
+  // ---- 初始化：渲染计分板并建立撤销起点 ----
+  renderPlayers();
+  recordState();
 </script>
 </body>
 </html>
