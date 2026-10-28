@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="FlEBqXTsiCPEvCkof4EGfv">
+<head data-page-node-id="qWA722mKrV9QsrRrADbNDv">
+<meta charset="UTF-8" data-page-node-id="kmaKfq1UBnnYVJoQN25Wiu">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" data-page-node-id="krj6mEOMI5ibvJ5R7OJNES">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>桌游助手</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(160deg, #fef6e4 0%, #ffd8a8 100%);
+    min-height: 100vh;
+    color: #3a2e2a;
+    padding: 20px 16px 40px;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 28px; letter-spacing: 2px; }
+  header p { font-size: 13px; color: #a0785a; margin-top: 6px; }
+
+  .card {
+    background: #fffdf8;
+    border-radius: 16px;
+    padding: 18px 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 14px rgba(160, 100, 40, 0.12);
+  }
+  .card h2 {
+    font-size: 15px;
+    margin-bottom: 12px;
+    color: #7c4a21;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* 分类多选 */
+  .cats { display: flex; flex-wrap: wrap; gap: 8px; }
+  .cat-chip {
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1.5px solid #e0b98a;
+    background: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all .15s;
+    user-select: none;
+  }
+  .cat-chip.on {
+    background: #ff8a3d;
+    border-color: #ff8a3d;
+    color: #fff;
+    font-weight: 600;
+  }
+  .cat-chip .cnt { font-size: 11px; opacity: .65; margin-left: 3px; }
+  .quick-row { display: flex; gap: 8px; margin-top: 10px; }
+  .quick-btn {
+    flex: 1;
+    padding: 7px 0;
+    border-radius: 10px;
+    border: 1.5px solid #e0b98a;
+    background: #fff;
+    color: #a0785a;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .quick-btn:active { background: #ffe3c2; }
+
+  /* 数量设置 */
+  .num-row { display: flex; align-items: center; gap: 12px; }
+  .num-btn {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    border: none;
+    background: #ffe3c2;
+    color: #b35c1e;
+    font-size: 22px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .num-btn:active { transform: scale(.92); }
+  #numVal { flex: 1; font-size: 24px; }
+  .num-hint { font-size: 12px; color: #b09070; margin-top: 8px; text-align: center; }
+
+  /* 抽词按钮 */
+  #drawBtn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #ff8a3d, #ff5e7e);
+    color: #fff;
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: 4px;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(255, 100, 80, 0.35);
+    transition: transform .12s;
+  }
+  #drawBtn:active { transform: scale(.97); }
+
+  /* 结果区 */
+  #result { margin-top: 16px; }
+  .word-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #fffdf8;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 3px 10px rgba(160, 100, 40, 0.10);
+    animation: pop .35s ease backwards;
+  }
+  .word-item .idx {
+    min-width: 30px; height: 30px;
+    border-radius: 50%;
+    background: #ffe3c2;
+    color: #b35c1e;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .word-item .w { font-size: 20px; font-weight: 700; }
+  .word-item .cat {
+    margin-left: auto;
+    font-size: 11px;
+    color: #fff;
+    background: #b8a08a;
+    padding: 3px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  @keyframes pop {
+    from { opacity: 0; transform: translateY(14px) scale(.95); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .empty-tip { text-align: center; color: #b09070; font-size: 13px; padding: 20px 0; }
+
+  /* ===== 游戏计时器 ===== */
+  .mode-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .seg {
+    flex: 1; text-align: center; padding: 9px 0;
+    border-radius: 12px; border: 1.5px solid #e0b98a; background: #fff;
+    font-size: 14px; font-weight: 600; color: #a0785a; cursor: pointer;
+    transition: all .15s; user-select: none;
+  }
+  .seg.on { background: #ff8a3d; border-color: #ff8a3d; color: #fff; }
+  .cfg-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .cfg-label { width: 76px; font-size: 14px; color: #7c4a21; font-weight: 600; }
+  .mini-btn {
+    width: 34px; height: 34px; border-radius: 10px; border: none;
+    background: #ffe3c2; color: #b35c1e; font-size: 18px; font-weight: 700; cursor: pointer;
+  }
+  .mini-btn:active { transform: scale(.92); }
+  .cfg-val { flex: 1; text-align: center; font-size: 20px; font-weight: 800; color: #b35c1e; }
+  .presets { display: flex; gap: 6px; margin: -4px 0 12px 86px; flex-wrap: wrap; }
+  .preset {
+    padding: 5px 12px; border-radius: 999px; border: 1.5px solid #e0b98a;
+    background: #fff; font-size: 12px; color: #a0785a; cursor: pointer; user-select: none;
+  }
+  .preset.on { background: #ff8a3d; border-color: #ff8a3d; color: #fff; }
+  .relay-hint { font-size: 12px; color: #b09070; line-height: 1.7; }
+  #runArea { text-align: center; padding: 4px 0 2px; }
+  .phase-dots { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 12px; }
+  .dot {
+    min-width: 30px; padding: 4px 7px; border-radius: 999px;
+    border: 1.5px solid #e0b98a; background: #fff; font-size: 12px; color: #a0785a;
+  }
+  .dot.cur { background: #ff8a3d; border-color: #ff8a3d; color: #fff; font-weight: 700; }
+  .dot.done { opacity: .45; text-decoration: line-through; }
+  #phaseTitle { font-size: 17px; font-weight: 700; color: #7c4a21; margin-bottom: 4px; }
+  #timerDisplay {
+    font-size: 56px; font-weight: 800; color: #b35c1e;
+    font-variant-numeric: tabular-nums; letter-spacing: 1px; margin: 2px 0 10px;
+  }
+  #timerDisplay.urgent { color: #e24b4a; animation: pulse .5s infinite alternate; }
+  @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.06); } }
+  .t-btns { display: flex; gap: 10px; margin-top: 8px; }
+  .t-btn {
+    flex: 1; padding: 13px 0; border: none; border-radius: 14px;
+    font-size: 16px; font-weight: 800; letter-spacing: 2px; cursor: pointer;
+    transition: transform .12s;
+  }
+  .t-btn:active { transform: scale(.97); }
+  #timerMain { background: linear-gradient(135deg, #ff8a3d, #ff5e7e); color: #fff; box-shadow: 0 4px 14px rgba(255, 100, 80, .3); }
+  .t-btn.ghost { background: #ffe3c2; color: #b35c1e; }
+  #flash {
+    position: fixed; inset: 0; background: rgba(255, 90, 80, .28);
+    opacity: 0; pointer-events: none; transition: opacity .15s; z-index: 99;
+  }
+  #flash.on { opacity: 1; }
+
+  /* ===== 主功能切换 ===== */
+  .main-tabs { display: flex; gap: 10px; margin-bottom: 18px; }
+  .main-tab {
+    flex: 1; text-align: center; padding: 14px 0;
+    border-radius: 16px; background: #fff; border: 2px solid #e0b98a;
+    font-size: 17px; font-weight: 800; color: #a0785a; cursor: pointer;
+    box-shadow: 0 3px 10px rgba(160, 100, 40, .08);
+    transition: all .15s; user-select: none;
+  }
+  .main-tab.on {
+    background: linear-gradient(135deg, #ff8a3d, #ff5e7e);
+    border-color: transparent; color: #fff;
+    box-shadow: 0 5px 16px rgba(255, 100, 80, .3);
+  }
+  .sec-title {
+    text-align: center; font-size: 13px; color: #a0785a;
+    letter-spacing: 2px; margin: -6px 0 14px;
+  }
+  /* 可输入的秒数框 */
+  .cfg-input {
+    flex: 1; width: 0; min-width: 0; text-align: center;
+    font-size: 20px; font-weight: 800; color: #b35c1e;
+    border: 2px solid #e0b98a; border-radius: 12px;
+    padding: 5px 0; background: #fff; font-family: inherit;
+  }
+  .cfg-input:focus { outline: none; border-color: #ff8a3d; }
+  .cfg-input::-webkit-outer-spin-button,
+  .cfg-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .cfg-input { appearance: textfield; -moz-appearance: textfield; }
+  .presets-inline { display: flex; flex: 1; gap: 6px; flex-wrap: wrap; }
+
+  /* ===== 计分板 ===== */
+  .score-add-row { display: flex; gap: 8px; }
+  .score-add-row .cfg-input { flex: 1; }
+  .score-add-row .cfg-input.name-in { flex: 2; text-align: left; padding: 5px 10px; font-weight: 600; }
+  .score-list { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .score-row {
+    display: flex; align-items: center; gap: 7px;
+    background: #fff8ef; border: 1.5px solid #e0b98a;
+    border-radius: 12px; padding: 8px 10px;
+    position: relative; z-index: 1;
+    touch-action: pan-y;           /* 纵向滚动交给页面，横向用于拖动 */
+    transition: transform .18s ease-out;
+  }
+  .score-row.dragging { transition: none; }
+  .score-row .rank { font-size: 12px; font-weight: 800; color: #cdbba6; width: 18px; text-align: center; flex: none; }
+  .score-row .pname { flex: 1; min-width: 0; font-weight: 700; color: #6b4a2e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .score-row .pscore {
+    font-size: 20px; font-weight: 800; color: #b35c1e;
+    min-width: 58px; text-align: center; cursor: pointer;
+    border-bottom: 2px dashed #e0b98a; padding-bottom: 1px;
+  }
+  .score-row .pscore-input {
+    font-size: 18px; font-weight: 800; color: #b35c1e; text-align: center;
+    width: 64px; border: 2px solid #ff8a3d; border-radius: 8px;
+    padding: 1px 0; background: #fff; font-family: inherit;
+  }
+  .score-row .pscore-input:focus { outline: none; }
+  .pbtn {
+    width: 36px; height: 36px; border-radius: 10px; border: none; flex: none;
+    background: #ffe3c2; color: #b35c1e; font-weight: 800; font-size: 16px; cursor: pointer;
+    transition: all .1s;
+  }
+  .pbtn:active { background: #ff8a3d; color: #fff; }
+  /* 左滑删除：外层裁剪，底层红按钮，上层滑块 */
+  .sp-item { position: relative; border-radius: 12px; overflow: hidden; }
+  .swipe-del {
+    position: absolute; top: 0; right: 0; bottom: 0; width: 76px;
+    border: none; background: #e05a5a; color: #fff;
+    font-weight: 800; font-size: 14px; cursor: pointer; font-family: inherit;
+  }
+  .swipe-del:active { background: #c94a4a; }
+  .sp-qinput {
+    width: 72px; text-align: center; font-size: 15px; font-weight: 800; color: #b35c1e;
+    border: 2px solid #ff8a3d; border-radius: 8px; padding: 5px 0;
+    background: #fff; font-family: inherit; flex: none;
+  }
+  .sp-qinput:focus { outline: none; border-color: #ff8a3d; }
+  .sp-sign {
+    width: 30px; height: 30px; border-radius: 8px; flex: none;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 17px; color: #fff;
+  }
+  .sp-sign.plus { background: #ff8a3d; }
+  .sp-sign.minus { background: #e05a5a; }
+  .sp-edit {
+    display: flex; align-items: center; gap: 8px;
+    background: #fff8ef; border: 1.5px solid #ff8a3d; border-radius: 12px;
+    padding: 8px 12px; margin-top: -2px;
+  }
+  .sp-edit-label { flex: 1; font-size: 13px; font-weight: 600; color: #a0785a; min-width: 0; }
+  .sp-edit-label b.plus { color: #ff8a3d; }
+  .sp-edit-label b.minus { color: #e05a5a; }
+  .sp-qok {
+    height: 34px; padding: 0 16px; border-radius: 10px; border: none; flex: none;
+    background: #ff8a3d; color: #fff; font-weight: 800; font-size: 13px; cursor: pointer;
+  }
+  .sp-qcancel {
+    height: 34px; padding: 0 14px; border-radius: 10px; border: 1.5px solid #e0b98a; flex: none;
+    background: #fff; color: #8a6a50; font-weight: 700; font-size: 13px; cursor: pointer;
+  }
+  .sp-hint {
+    background: #fff8ef; border: 1.5px dashed #e0b98a; border-radius: 12px;
+    padding: 9px 12px; margin: 4px 0 10px;
+    font-size: 12.5px; color: #a0785a; line-height: 1.8;
+  }
+  .sp-hint b { color: #b35c1e; }
+  .sp-toolbar { display: flex; gap: 8px; margin-top: 12px; }
+  .sp-toolbar .t-btn { flex: 1; padding: 10px 0; font-size: 14px; }
+</style>
+</head>
+<body data-page-node-id="BGrz7Np0DlGTuhBzkDzrmT">
+
+<header data-page-node-id="oAxHoJvtE479LyTx9OnkVY">
+  <h1 data-page-node-id="fDOfH3cT9dgphsXUBLVNtH">🎲 桌游助手</h1>
+</header>
+
+<div class="main-tabs">
+  <div class="main-tab on" data-sec="draw">🎨 抽词器</div>
+  <div class="main-tab" data-sec="timer">⏱ 计时器</div>
+  <div class="main-tab" data-sec="score">🏆 计分板</div>
+</div>
+
+<div id="drawSection">
+<div class="sec-title">—— 选词抽词 ——</div>
+
+<div class="card" data-page-node-id="orJM4ILM4RUVIcwGGguJBy">
+  <h2 data-page-node-id="cQR86pEmKP43wdgGmHiz3X">🗂 选择分类（可多选）</h2>
+  <div class="cats" id="cats" data-page-node-id="LZnFY22g1ECAqKqRAOqNN8"></div>
+  <div class="quick-row" data-page-node-id="jAFoXEGln5Y3bcnpQkwCIL">
+    <button class="quick-btn" id="allBtn" data-page-node-id="zxUjoV5fOYGoodGIXDRRG9">全选</button>
+    <button class="quick-btn" id="noneBtn" data-page-node-id="zIxDLZ9SCgqZOHnuBFcXFs">清空</button>
+  </div>
+</div>
+
+<div class="card" data-page-node-id="I0G14kaHJfurBUwELurvGR">
+  <h2 data-page-node-id="6blH2QjTWogBaMNCmUlLyO">🔢 抽取数量</h2>
+  <div class="num-row" data-page-node-id="yzE4OCDHhrIMAdGbu1HgN8">
+    <button class="num-btn" id="minus" data-page-node-id="cyooSdVsXLQAZIJxjtT5Ny">−</button>
+    <input type="text" class="cfg-input" id="numVal" inputmode="numeric" pattern="[0-9]*" maxlength="4" value="5" data-page-node-id="bPCpEtn5oT2vVyRWVXIc1B">
+    <button class="num-btn" id="plus" data-page-node-id="UQQtUtE9WmDHcWwHyQGWub">＋</button>
+  </div>
+  <div class="num-hint" id="numHint" data-page-node-id="LcDFbC6O7HzzGJgCt5PCgu"></div>
+</div>
+
+<button id="drawBtn" data-page-node-id="qxXH5ADZTEzgcYd66shgCn">开始抽词</button>
+
+<div id="result" data-page-node-id="ncTfA4tuRRxuHsTDIVqPC8"></div>
+</div><!-- /drawSection -->
+
+<div id="timerSection" style="display:none">
+<div class="sec-title">—— 游戏计时 ——</div>
+
+<div class="card" id="timerCard">
+  <h2>⏱ 游戏计时器</h2>
+
+  <div class="mode-tabs">
+    <div class="seg on" data-mode="normal">普通模式</div>
+    <div class="seg" data-mode="relay">接龙模式</div>
+  </div>
+
+  <!-- 通用：倒数语音播报设置 -->
+  <div id="cfgCommon">
+    <div class="cfg-row">
+      <span class="cfg-label">倒数提示</span>
+      <div class="presets-inline">
+        <span class="preset" data-key="alertSec" data-v="0">关</span>
+        <span class="preset" data-key="alertSec" data-v="5">最后5秒</span>
+        <span class="preset on" data-key="alertSec" data-v="10">最后10秒</span>
+        <span class="preset" data-key="alertSec" data-v="15">最后15秒</span>
+        <span class="preset" data-key="alertSec" data-v="30">最后30秒</span>
+      </div>
+    </div>
+    <div class="relay-hint" style="margin:-2px 0 10px">剩设定秒数时响一声提示音；归零时结束音 + 语音「时间到」。</div>
+  </div>
+
+  <!-- 普通模式配置 -->
+  <div id="cfgNormal">
+    <div class="cfg-row">
+      <span class="cfg-label">游戏轮数</span>
+      <button class="mini-btn" id="rMinus">−</button>
+      <input type="text" class="cfg-input" id="rVal" inputmode="numeric" pattern="[0-9]*" maxlength="2" value="3">
+      <button class="mini-btn" id="rPlus">＋</button>
+    </div>
+    <div class="cfg-row">
+      <span class="cfg-label">每轮秒数</span>
+      <button class="mini-btn" id="rsMinus">−</button>
+      <input type="text" class="cfg-input" id="rsVal" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="60">
+      <button class="mini-btn" id="rsPlus">＋</button>
+    </div>
+    <div class="presets">
+      <span class="preset" data-key="roundSec" data-v="30">30秒</span>
+      <span class="preset on" data-key="roundSec" data-v="60">60秒</span>
+      <span class="preset" data-key="roundSec" data-v="90">90秒</span>
+      <span class="preset" data-key="roundSec" data-v="120">120秒</span>
+    </div>
+  </div>
+
+  <!-- 接龙模式配置 -->
+  <div id="cfgRelay" style="display:none">
+    <div class="cfg-row">
+      <span class="cfg-label">玩家人数</span>
+      <button class="mini-btn" id="pMinus">−</button>
+      <input type="text" class="cfg-input" id="pVal" inputmode="numeric" pattern="[0-9]*" maxlength="2" value="6">
+      <button class="mini-btn" id="pPlus">＋</button>
+    </div>
+    <div class="cfg-row">
+      <span class="cfg-label">画图秒数</span>
+      <button class="mini-btn" id="dMinus">−</button>
+      <input type="text" class="cfg-input" id="dVal" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="60">
+      <button class="mini-btn" id="dPlus">＋</button>
+    </div>
+    <div class="presets">
+      <span class="preset" data-key="drawSec" data-v="30">30秒</span>
+      <span class="preset on" data-key="drawSec" data-v="60">60秒</span>
+      <span class="preset" data-key="drawSec" data-v="90">90秒</span>
+    </div>
+    <div class="cfg-row">
+      <span class="cfg-label">猜词秒数</span>
+      <button class="mini-btn" id="gMinus">−</button>
+      <input type="text" class="cfg-input" id="gVal" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="30">
+      <button class="mini-btn" id="gPlus">＋</button>
+    </div>
+    <div class="presets">
+      <span class="preset" data-key="guessSec" data-v="10">10秒</span>
+      <span class="preset" data-key="guessSec" data-v="15">15秒</span>
+      <span class="preset" data-key="guessSec" data-v="20">20秒</span>
+      <span class="preset on" data-key="guessSec" data-v="30">30秒</span>
+    </div>
+    <div class="relay-hint" id="relayHint"></div>
+  </div>
+
+  <!-- 计时运行区 -->
+  <div id="runArea" style="display:none">
+    <div class="phase-dots" id="phaseDots"></div>
+    <div id="phaseTitle"></div>
+    <div id="timerDisplay">00:00.00</div>
+  </div>
+
+  <div class="t-btns">
+    <button class="t-btn" id="timerMain">开始</button>
+    <button class="t-btn ghost" id="timerSkip" style="display:none">跳过</button>
+    <button class="t-btn ghost" id="timerReset" style="display:none">重置</button>
+  </div>
+</div>
+</div><!-- /timerSection -->
+
+<div id="scoreSection" style="display:none">
+<div class="sec-title">—— 桌游计分板 ——</div>
+
+<div class="card">
+  <h2>➕ 添加玩家</h2>
+  <div class="score-add-row">
+    <input type="text" class="cfg-input name-in" id="spName" placeholder="玩家姓名" maxlength="10">
+    <input type="text" class="cfg-input" id="spInit" inputmode="numeric" value="0" title="初始分数，可填负数">
+  </div>
+  <div class="relay-hint" style="margin:6px 0 0">右侧为初始分数，可填负数；留空姓名则自动编号「玩家N」。</div>
+  <button class="t-btn" id="spAdd" style="width:100%;margin-top:10px">添加玩家</button>
+</div>
+
+<div class="card" id="spCard" style="display:none">
+  <h2>🏆 玩家分数</h2>
+  <div class="cfg-row">
+    <span class="cfg-label">单次加减</span>
+    <div class="presets-inline" id="spSteps">
+      <span class="preset on" data-step="1">±1</span>
+      <span class="preset" data-step="5">±5</span>
+      <span class="preset" data-step="10">±10</span>
+    </div>
+  </div>
+  <div class="sp-hint">
+    <b>计分方法：</b><br>
+    1. 选一个常用步长（±1 / ±5 / ±10），点玩家行的 − ＋ 即按该步长加减；<br>
+    2. 再点一次选中的步长可取消选中，此后点 − ＋ 会在该行出现输入框，输入本次加减的分值；<br>
+    3. 点玩家的分数数字，可直接输入准确分数（含负数）；<br>
+    4. 向左滑动玩家行，点露出的红色「删除」可移除玩家。
+  </div>
+
+  <div class="score-list" id="spList"></div>
+
+  <div class="cfg-row" style="margin-top:12px">
+    <span class="cfg-label">排序方式</span>
+    <div class="presets-inline" id="spSortSeg">
+      <span class="preset" data-order="asc">↑ 升序（低→高）</span>
+      <span class="preset on" data-order="desc">↓ 降序（高→低）</span>
+    </div>
+  </div>
+
+  <div class="sp-toolbar">
+    <button class="t-btn ghost" id="spZero">全部清零</button>
+    <button class="t-btn ghost" id="spClear">全部清空</button>
+  </div>
+</div>
+</div><!-- /scoreSection -->
+
+<div id="flash"></div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#cdbba6;margin-top:6px;user-select:none">版本 v9 · 10/27</div>
+
+<script src="words.js"></script>
+<script>
+  const catsBox = document.getElementById('cats');
+  const numVal = document.getElementById('numVal');
+  const numHint = document.getElementById('numHint');
+  const drawBtn = document.getElementById('drawBtn');
+  const resultBox = document.getElementById('result');
+
+  const selected = new Set(Object.keys(WORD_BANK)); // 默认全选
+  const allCats = Object.keys(WORD_BANK);
+  let count = 5;
+
+  // 渲染分类标签
+  function renderCats() {
+    catsBox.innerHTML = '';
+    for (const cat of allCats) {
+      const chip = document.createElement('div');
+      chip.className = 'cat-chip' + (selected.has(cat) ? ' on' : '');
+      chip.innerHTML = cat + '<span class="cnt">' + WORD_BANK[cat].length + '</span>';
+      chip.onclick = () => {
+        // 关键修复：如果当前是"全选"状态，点某个分类 = 只选这一个
+        // （此时用户意图几乎总是"我就要这个分类"，而不是"取消它"）
+        if (selected.size === allCats.length && selected.has(cat)) {
+          selected.clear();
+          selected.add(cat);
+        } else {
+          selected.has(cat) ? selected.delete(cat) : selected.add(cat);
+        }
+        renderCats();
+      };
+      catsBox.appendChild(chip);
+    }
+    updateHint();
+  }
+
+  document.getElementById('allBtn').onclick = () => { allCats.forEach(c => selected.add(c)); renderCats(); };
+  document.getElementById('noneBtn').onclick = () => { selected.clear(); renderCats(); };
+
+  function poolSize() {
+    let n = 0;
+    selected.forEach(c => n += WORD_BANK[c].length);
+    return n;
+  }
+
+  function updateHint() {
+    const n = poolSize();
+    const names = allCats.filter(c => selected.has(c));
+    numHint.textContent = names.length === 0
+      ? '还没选分类，请至少选一个'
+      : '已选：' + names.join('、') + '（共 ' + n + ' 个词）';
+    if (count > n && n > 0) setCount(n);
+  }
+
+  // ---- 抽取数量：可点按增减，也可直接键入 ----
+  function maxCount() {
+    const n = poolSize();
+    return n > 0 ? n : 1;
+  }
+  function setCount(v) {
+    count = v;
+    numVal.value = v;
+  }
+  function applyCountInput() {
+    let v = parseInt(String(numVal.value).replace(/\D/g, ''), 10);
+    if (isNaN(v)) v = count;
+    setCount(Math.min(maxCount(), Math.max(1, v)));
+    updateHint();
+  }
+
+  numVal.addEventListener('input', () => {
+    const digits = String(numVal.value).replace(/\D/g, '').slice(0, 4);
+    if (numVal.value !== digits) numVal.value = digits;
+    if (digits !== '') count = Math.min(maxCount(), Math.max(1, parseInt(digits, 10)));
+  });
+  numVal.addEventListener('blur', applyCountInput);
+  numVal.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); numVal.blur(); } });
+
+  document.getElementById('minus').onclick = () => { if (count > 1) setCount(count - 1); };
+  document.getElementById('plus').onclick = () => {
+    const n = poolSize();
+    if (n === 0) setCount(count + 1);
+    else if (count < n) setCount(count + 1);
+  };
+
+  // 洗牌（Fisher–Yates），保证不重复
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  drawBtn.onclick = () => {
+    if (selected.size === 0) { alert('至少选一个分类哦'); return; }
+    // 汇总词池：记录词 + 所属分类
+    const pool = [];
+    selected.forEach(c => WORD_BANK[c].forEach(w => pool.push({ w, c })));
+    if (pool.length === 0) { alert('词池是空的，先往 words.js 里加点词吧'); return; }
+
+    const realCount = Math.min(count, pool.length);
+    const picked = shuffle(pool).slice(0, realCount);
+
+    resultBox.innerHTML = '';
+    picked.forEach((item, i) => {
+      const div = document.createElement('div');
+      div.className = 'word-item';
+      div.style.animationDelay = (i * 0.07) + 's';
+      div.innerHTML =
+        '<div class="idx">' + (i + 1) + '</div>' +
+        '<div class="w">' + item.w + '</div>' +
+        '<div class="cat">' + item.c + '</div>';
+      resultBox.appendChild(div);
+    });
+    // 抽完滚到结果区
+    setTimeout(() => resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+  };
+
+  renderCats();
+</script>
+
+<script>
+  // ===== 游戏计时器 =====
+  const $t = id => document.getElementById(id);
+  let tMode = 'normal';        // normal | relay
+  let tState = 'idle';         // idle | running | paused | between | done
+  const cfg = { rounds: 3, roundSec: 60, players: 6, drawSec: 60, guessSec: 30, alertSec: 10 };
+  let phases = [], pi = 0, remainMs = 0, lastTs = 0, rafId = null, gen = 0, alertFired = false;
+
+  const tagIcon = { '画图': '🎨', '猜词': '💬', '选词': '📝', '画 & 猜': '🎨' };
+  const keyValId = { rounds: 'rVal', roundSec: 'rsVal', players: 'pVal', drawSec: 'dVal', guessSec: 'gVal' };
+
+  // ---- 不保存任何设置到本机（旧版本遗留的本地记录一并清掉）----
+  try { localStorage.removeItem('pzTimerCfg'); } catch (e) {}
+
+  // ---- 配置项增减 ----
+  function clearPresets(key) {
+    document.querySelectorAll('.preset[data-key="' + key + '"]').forEach(x => x.classList.remove('on'));
+  }
+  function setVal(key) {
+    const el = $t(keyValId[key]);
+    if (!el) return;
+    if (el.tagName === 'INPUT') el.value = cfg[key]; else el.textContent = cfg[key];
+  }
+  // 显式绑定每个配置
+  function bindCtrl(key, minusId, plusId, step, min, max, after) {
+    $t(minusId).onclick = () => { if (tState !== 'idle') return; cfg[key] = Math.max(min, cfg[key] - step); setVal(key); clearPresets(key); after && after(); };
+    $t(plusId).onclick = () => { if (tState !== 'idle') return; cfg[key] = Math.min(max, cfg[key] + step); setVal(key); clearPresets(key); after && after(); };
+    setVal(key);
+  }
+  bindCtrl('rounds', 'rMinus', 'rPlus', 1, 1, 20);
+  bindCtrl('roundSec', 'rsMinus', 'rsPlus', 10, 1, 600);
+  bindCtrl('players', 'pMinus', 'pPlus', 1, 2, 16, updateRelayHint);
+  bindCtrl('drawSec', 'dMinus', 'dPlus', 10, 1, 600);
+  bindCtrl('guessSec', 'gMinus', 'gPlus', 5, 1, 300);
+
+  // ---- 数字输入框（轮数 / 秒数）：纯文本输入，键入即生效，离开输入框只做范围钳制 ----
+  // 秒数最小 1 秒
+  const inputRange = { rounds: [1, 20], roundSec: [1, 600], players: [2, 16], drawSec: [1, 600], guessSec: [1, 300] };
+
+  function clampVal(key, v) {
+    const mn = inputRange[key][0], mx = inputRange[key][1];
+    return Math.min(mx, Math.max(mn, v));
+  }
+
+  // 把输入框里的数字读进配置（开始计时前也会调一次，确保用屏幕上显示的数）
+  function syncInputs() {
+    Object.keys(inputRange).forEach(key => {
+      const el = $t(keyValId[key]);
+      if (!el) return;
+      if (el.tagName === 'INPUT') {
+        const v = parseInt(String(el.value).replace(/\D/g, ''), 10);
+        if (!isNaN(v)) cfg[key] = clampVal(key, v);
+        el.value = cfg[key];
+      } else {
+        el.textContent = cfg[key];
+      }
+    });
+    refreshPresets();
+  }
+
+  Object.keys(inputRange).forEach(key => {
+    const el = $t(keyValId[key]);
+    if (!el || el.tagName !== 'INPUT') return;
+
+    // 键入时：只保留数字，不钳制、不改写输入内容（避免打到一半被改成别的数）
+    el.addEventListener('input', () => {
+      if (tState !== 'idle') { el.value = cfg[key]; return; }
+      const digits = String(el.value).replace(/\D/g, '').slice(0, 4);
+      if (el.value !== digits) el.value = digits;
+      if (digits !== '') {
+        cfg[key] = clampVal(key, parseInt(digits, 10));
+        clearPresets(key);
+        if (key === 'players') updateRelayHint();
+      }
+    });
+
+    // 离开输入框：把范围外的数字钳制好再回填
+    el.addEventListener('blur', () => {
+      if (tState !== 'idle') return;
+      let v = parseInt(String(el.value).replace(/\D/g, ''), 10);
+      if (isNaN(v)) v = cfg[key];
+      cfg[key] = clampVal(key, v);
+      el.value = cfg[key];
+      refreshPresets();
+      if (key === 'players') updateRelayHint();
+    });
+
+    // 回车 = 确认并收起键盘
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+    });
+  });
+
+  // ---- 快捷预设 ----
+  document.querySelectorAll('.preset').forEach(p => {
+    p.onclick = () => {
+      if (tState !== 'idle') return;
+      const key = p.dataset.key;
+      cfg[key] = +p.dataset.v;
+      setVal(key);
+      document.querySelectorAll('.preset[data-key="' + key + '"]').forEach(x => x.classList.toggle('on', x === p));
+    };
+  });
+
+  // ---- 模式切换 ----
+  document.querySelectorAll('.seg').forEach(el => {
+    el.onclick = () => {
+      if (tState !== 'idle') return;
+      tMode = el.dataset.mode;
+      document.querySelectorAll('.seg').forEach(s => s.classList.toggle('on', s === el));
+      $t('cfgNormal').style.display = tMode === 'normal' ? 'block' : 'none';
+      $t('cfgRelay').style.display = tMode === 'relay' ? 'block' : 'none';
+      if (tMode === 'relay') updateRelayHint();
+    };
+  });
+
+  // ---- 生成阶段序列 ----
+  function buildPhases() {
+    if (tMode === 'normal') {
+      phases = Array.from({ length: cfg.rounds }, (_, i) => ({
+        title: '第 ' + (i + 1) + ' 轮', tag: '画 & 猜', dur: cfg.roundSec
+      }));
+    } else {
+      phases = [];
+      const N = cfg.players;
+      if (N % 2 === 0) {
+        // 偶数人：奇数位画图，偶数位猜词，最后一位收尾猜词
+        for (let i = 1; i <= N; i++) {
+          phases.push(i % 2 === 1
+            ? { title: '玩家 ' + i, tag: '画图', dur: cfg.drawSec }
+            : { title: '玩家 ' + i, tag: '猜词', dur: cfg.guessSec });
+        }
+      } else {
+        // 奇数人：玩家1只选词(30秒)，从玩家2起画图/猜词交替
+        phases.push({ title: '玩家 1', tag: '选词', dur: 30 });
+        for (let i = 2; i <= N; i++) {
+          phases.push(i % 2 === 0
+            ? { title: '玩家 ' + i, tag: '画图', dur: cfg.drawSec }
+            : { title: '玩家 ' + i, tag: '猜词', dur: cfg.guessSec });
+        }
+      }
+    }
+  }
+
+  function updateRelayHint() {
+    const N = cfg.players;
+    buildPhases();
+    const desc = N % 2 === 0
+      ? N + ' 位玩家：从玩家1开始画图、猜词交替进行，最后由玩家' + N + '猜词收尾。'
+      : N + ' 位玩家：玩家1先选词（30秒），之后从玩家2起画图、猜词交替进行。';
+    $t('relayHint').textContent = desc + ' 共 ' + phases.length + ' 个阶段，每阶段倒计时结束后点击按钮手动开始下一阶段。';
+  }
+
+  // ---- 显示渲染 ----
+  function fmt(ms) {
+    ms = Math.max(0, ms);
+    const cs = Math.floor(ms % 1000 / 10), s = Math.floor(ms / 1000), m = Math.floor(s / 60);
+    return String(m).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0') + '.' + String(cs).padStart(2, '0');
+  }
+
+  function renderDots() {
+    const box = $t('phaseDots');
+    box.innerHTML = '';
+    phases.forEach((p, i) => {
+      const d = document.createElement('span');
+      d.className = 'dot' + (i < pi ? ' done' : i === pi ? ' cur' : '');
+      d.textContent = (i + 1) + (tagIcon[p.tag] || '');
+      box.appendChild(d);
+    });
+  }
+
+  function renderPhase() {
+    renderDots();
+    const p = phases[pi];
+    $t('phaseTitle').textContent = p.title + ' · ' + tagIcon[p.tag] + ' ' + p.tag;
+  }
+
+  function renderTime() {
+    const el = $t('timerDisplay');
+    el.textContent = fmt(remainMs);
+    el.classList.toggle('urgent', tState === 'running' && remainMs <= 5000 && remainMs > 0);
+  }
+
+  function setState(s) {
+    tState = s;
+    const main = $t('timerMain');
+    main.style.pointerEvents = 'auto';
+    if (s === 'idle') {
+      main.textContent = '开始';
+      $t('timerSkip').style.display = 'none';
+      $t('timerReset').style.display = 'none';
+      $t('runArea').style.display = 'none';
+      $t('cfgCommon').style.display = 'block';
+      $t(tMode === 'normal' ? 'cfgNormal' : 'cfgRelay').style.display = 'block';
+      document.querySelector('.mode-tabs').style.display = 'flex';
+    } else {
+      $t('runArea').style.display = 'block';
+      $t('cfgCommon').style.display = 'none';
+      $t('cfgNormal').style.display = 'none';
+      $t('cfgRelay').style.display = 'none';
+      document.querySelector('.mode-tabs').style.display = 'none';
+      $t('timerReset').style.display = 'block';
+      $t('timerSkip').style.display = (s === 'running' || s === 'paused') ? 'block' : 'none';
+      if (s === 'running') main.textContent = '暂停';
+      else if (s === 'paused') main.textContent = '继续';
+      else if (s === 'between') main.textContent = (pi < phases.length - 1) ? '开始下一阶段 ▶' : '查看结果 ▶';
+      else if (s === 'done') main.textContent = '再来一局';
+    }
+  }
+
+  // ---- 声音与闪屏 ----
+  let AC = null;
+  function ensureAudio() {
+    if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+    if (AC && AC.state === 'suspended') AC.resume();
+    primeSpeech();
+  }
+  function beep(freq, dur) {
+    if (!AC) return;
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(.3, AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, AC.currentTime + dur);
+    o.connect(g); g.connect(AC.destination);
+    o.start(); o.stop(AC.currentTime + dur);
+  }
+  function flash() {
+    const f = $t('flash');
+    f.classList.add('on');
+    setTimeout(() => f.classList.remove('on'), 500);
+  }
+
+  // ---- 语音播报（只用于「时间到」）----
+  const speechOK = typeof window.speechSynthesis !== 'undefined' && typeof window.SpeechSynthesisUtterance !== 'undefined';
+
+  function speak(text, interrupt) {
+    if (!speechOK) return;
+    try {
+      const s = window.speechSynthesis;
+      if (interrupt) {
+        s.cancel();                       // 抢占：直接掐掉上一句
+      } else if (s.speaking || s.pending) {
+        return;                           // 不排队：宁可这句不说，也不叠着说
+      }
+      const u = new window.SpeechSynthesisUtterance(text);
+      u.lang = 'zh-CN';
+      u.rate = 1.05;
+      u.pitch = 1;
+      u.volume = 1;
+      s.speak(u);
+    } catch (e) {}
+  }
+
+  function cancelSpeech() {
+    if (!speechOK) return;
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+
+  // iOS 要求首次发声由用户手势触发，点「开始」时先用一条静音语句唤醒引擎
+  function primeSpeech() {
+    if (!speechOK) return;
+    try {
+      const u = new window.SpeechSynthesisUtterance(' ');
+      u.volume = 0;
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+
+  // ---- 计时核心 ----
+  function startPhase() {
+    const p = phases[pi];
+    remainMs = p.dur * 1000;
+    alertFired = false;
+    cancelSpeech();
+    renderPhase();
+    renderTime();
+    setState('running');
+    lastTs = performance.now();
+    cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function tick(ts) {
+    if (tState !== 'running') return;
+    remainMs -= (ts - lastTs);
+    lastTs = ts;
+    if (remainMs <= 0) { remainMs = 0; renderTime(); timeUp(); return; }
+    // 倒数提示：剩 N 秒时响一声蜂鸣
+    const sec = Math.ceil(remainMs / 1000);
+    if (!alertFired && cfg.alertSec > 0 && sec === cfg.alertSec) {
+      alertFired = true;
+      beep(1046, .28);
+    }
+    renderTime();
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function timeUp() {
+    // 结束音（三连蜂鸣）+ 闪屏，随后语音播报「时间到」
+    beep(880, .15);
+    setTimeout(() => beep(880, .15), 220);
+    setTimeout(() => beep(1200, .45), 440);
+    flash();
+    // 「时间到」优先级最高：掐掉未说完的倒数播报，必完整播出
+    setTimeout(() => speak('时间到', true), 780);
+    $t('phaseTitle').textContent = '⏰ 时间到！';
+    setState('between');
+  }
+
+  function finish() {
+    cancelSpeech();
+    setState('done');
+    $t('phaseTitle').textContent = '🎉 游戏结束！';
+    $t('timerDisplay').textContent = '00:00.00';
+    $t('timerDisplay').classList.remove('urgent');
+  }
+
+  // ---- 按钮 ----
+  $t('timerMain').onclick = () => {
+    ensureAudio();
+    if (tState === 'idle') {
+      gen++;
+      syncInputs();              // 以输入框里显示的数字为准，避免用到旧配置
+      buildPhases(); pi = 0; startPhase();
+    } else if (tState === 'running') {
+      cancelAnimationFrame(rafId);
+      $t('timerDisplay').classList.remove('urgent');
+      setState('paused');
+    } else if (tState === 'paused') {
+      setState('running');
+      lastTs = performance.now();
+      rafId = requestAnimationFrame(tick);
+    } else if (tState === 'between') {
+      // 玩家手动确认后才进入下一阶段
+      if (pi < phases.length - 1) { pi++; startPhase(); }
+      else finish();
+    } else if (tState === 'done') {
+      gen++;
+      pi = 0; startPhase();
+    }
+  };
+
+  $t('timerSkip').onclick = () => {
+    if (tState !== 'running' && tState !== 'paused') return;
+    gen++;
+    cancelSpeech();
+    cancelAnimationFrame(rafId);
+    if (pi < phases.length - 1) { pi++; startPhase(); }
+    else finish();
+  };
+
+  $t('timerReset').onclick = () => {
+    gen++;
+    cancelSpeech();
+    cancelAnimationFrame(rafId);
+    setState('idle');
+    if (tMode === 'relay') updateRelayHint();
+  };
+
+  // ---- 根据已恢复的配置同步预设按钮高亮 ----
+  function refreshPresets() {
+    ['roundSec', 'drawSec', 'guessSec', 'alertSec'].forEach(key => {
+      document.querySelectorAll('.preset[data-key="' + key + '"]').forEach(x =>
+        x.classList.toggle('on', +x.dataset.v === cfg[key]));
+    });
+  }
+  syncInputs();          // 初始化：以输入框中的数字为准（同时归一化范围）
+
+  updateRelayHint();
+
+  // ---- 主页签：抽词器 / 计时器 切换 ----
+  function showSection(sec) {
+    document.querySelectorAll('.main-tab').forEach(x => x.classList.toggle('on', x.dataset.sec === sec));
+    $t('drawSection').style.display = sec === 'draw' ? 'block' : 'none';
+    $t('timerSection').style.display = sec === 'timer' ? 'block' : 'none';
+    $t('scoreSection').style.display = sec === 'score' ? 'block' : 'none';
+  }
+  document.querySelectorAll('.main-tab').forEach(tab => {
+    tab.onclick = () => showSection(tab.dataset.sec);
+  });
+
+  // 初始化：只显示抽词器一个功能区，避免任何异常状态下两块内容同时出现
+  showSection('draw');
+  window.scrollTo(0, 0);
+
+  // ===== 计分板 =====
+  let players = [];            // { name, score }
+  let scoreStep = 1;           // null = 未选步长（点 ± 时就地输入）
+  let scoreDesc = true;        // true: 高→低, false: 低→高
+  let spPending = null;        // { idx, sign } 就地输入本次加减分
+  let spOpenIdx = null;        // 左滑展开删除按钮的玩家下标
+
+  const DEL_W = 76;            // 删除按钮宽度
+
+  // 把玩家行包进左滑结构：底层红「删除」，上层滑块，跟随手指横移
+  function wrapSwipe(row, idx) {
+    const item = document.createElement('div');
+    item.className = 'sp-item';
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'swipe-del'; delBtn.textContent = '删除';
+    delBtn.title = '移除该玩家';
+    delBtn.onclick = () => { players.splice(idx, 1); spOpenIdx = null; spPending = null; renderPlayers(); };
+
+    // 初始位置：该行处于展开态则停在左侧
+    const baseX = (spOpenIdx === idx) ? -DEL_W : 0;
+    row.style.transform = 'translateX(' + baseX + 'px)';
+
+    let startX = 0, startY = 0, dx = 0, locked = null, moved = false;
+
+    row.addEventListener('pointerdown', e => {
+      // 从按钮/输入框上开始的按压不作为拖动起点
+      if (e.target.closest('button, input')) return;
+      startX = e.clientX; startY = e.clientY; dx = baseX; locked = null; moved = false;
+      try { row.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    row.addEventListener('pointermove', e => {
+      if (e.pressure === 0 && e.pointerType !== 'mouse') return;
+      const mx = e.clientX - startX, my = e.clientY - startY;
+      if (locked === null) {
+        if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+        // 方向锁：横向为主才拖动，纵向交还给页面滚动
+        locked = Math.abs(mx) > Math.abs(my) ? 'h' : 'v';
+        if (locked === 'h') row.classList.add('dragging');
+      }
+      if (locked !== 'h') return;
+      moved = true;
+      dx = Math.min(0, Math.max(-DEL_W, baseX + mx));
+      row.style.transform = 'translateX(' + dx + 'px)';
+    });
+    const finish = () => {
+      if (locked === 'h') {
+        row.classList.remove('dragging');
+        // 超过一半吸附展开，否则弹回；只允许一行处于展开态
+        spOpenIdx = (dx < -DEL_W / 2) ? idx : null;
+        suppressNextClick = true;
+        setTimeout(() => { suppressNextClick = false; }, 0);
+        renderPlayers();
+      }
+      locked = null;
+    };
+    row.addEventListener('pointerup', finish);
+    row.addEventListener('pointercancel', finish);
+
+    // 拖动结束后拦截紧随其后的 click，避免误触加减/编辑
+    let suppressNextClick = false;
+    row.addEventListener('click', e => {
+      if (suppressNextClick) { e.stopPropagation(); e.preventDefault(); }
+    }, true);
+
+    item.appendChild(delBtn);
+    item.appendChild(row);
+    return item;
+  }
+
+  function parseIntAllowNeg(s, fallback) {
+    const m = String(s).trim().match(/^-?\d+$/);
+    return m ? parseInt(m[0], 10) : fallback;
+  }
+
+  function renderPlayers() {
+    const box = $t('spList');
+    box.innerHTML = '';
+    $t('spCard').style.display = players.length ? 'block' : 'none';
+
+    const sorted = players.map((p, i) => ({ p, i }))
+      .sort((a, b) => scoreDesc ? b.p.score - a.p.score : a.p.score - b.p.score);
+
+    sorted.forEach(({ p, i }, rank) => {
+      const row = document.createElement('div');
+      row.className = 'score-row';
+
+      const rk = document.createElement('span');
+      rk.className = 'rank'; rk.textContent = rank + 1;
+      const nm = document.createElement('span');
+      nm.className = 'pname'; nm.textContent = p.name;
+      nm.title = p.name;
+
+      const sc = document.createElement('span');
+      sc.className = 'pscore'; sc.textContent = p.score;
+      sc.onclick = () => { spPending = null; spOpenIdx = null; startEditScore(row, i); };
+
+
+      if (spPending && spPending.idx === i) {
+        // 主行只显示信息；输入区另起一行，避免与移除按钮混淆
+        const sign = document.createElement('span');
+        sign.className = 'sp-sign ' + (spPending.sign > 0 ? 'plus' : 'minus');
+        sign.textContent = spPending.sign > 0 ? '＋' : '−';
+        row.appendChild(rk);
+        row.appendChild(nm);
+        row.appendChild(sc);
+        row.appendChild(sign);
+        box.appendChild(wrapSwipe(row, i));
+
+        // 输入行：[说明文字][输入框][✓][取消]
+        const edit = document.createElement('div');
+        edit.className = 'sp-edit';
+
+        const label = document.createElement('span');
+        label.className = 'sp-edit-label';
+        label.innerHTML = '输入本次需要<b class="' + (spPending.sign > 0 ? 'plus">增加' : 'minus">减少') + '</b>的分值：';
+
+        const qin = document.createElement('input');
+        qin.type = 'text'; qin.className = 'sp-qinput';
+        qin.placeholder = '如 7 或 -3';
+
+        const qok = document.createElement('button');
+        qok.className = 'sp-qok'; qok.textContent = '确认'; qok.title = '确认';
+        const apply = () => {
+          const v = parseIntAllowNeg(qin.value, null);
+          if (v !== null) p.score += spPending.sign * v;
+          spPending = null;
+          renderPlayers();
+        };
+        qok.onclick = apply;
+
+        const qcancel = document.createElement('button');
+        qcancel.className = 'sp-qcancel'; qcancel.textContent = '取消'; qcancel.title = '取消本次输入';
+        qcancel.onclick = () => { spPending = null; renderPlayers(); };
+
+        qin.addEventListener('keydown', e => {
+          if (e.key === 'Enter') { e.preventDefault(); apply(); }
+          if (e.key === 'Escape') { spPending = null; renderPlayers(); }
+        });
+
+        edit.appendChild(label);
+        edit.appendChild(qin);
+        edit.appendChild(qok);
+        edit.appendChild(qcancel);
+        box.appendChild(edit);
+        setTimeout(() => { qin.focus(); }, 0);
+        return;
+      }
+
+      const minus = document.createElement('button');
+      minus.className = 'pbtn'; minus.textContent = '−';
+      minus.onclick = () => quickAdjust(i, -1);
+
+      const plus = document.createElement('button');
+      plus.className = 'pbtn'; plus.textContent = '＋';
+      plus.onclick = () => quickAdjust(i, +1);
+
+      row.appendChild(rk);
+      row.appendChild(nm);
+      row.appendChild(minus);
+      row.appendChild(sc);
+      row.appendChild(plus);
+      box.appendChild(wrapSwipe(row, i));
+    });
+  }
+
+  // 点 − / ＋：有步长则直接加减，否则该行进入就地输入模式
+  function quickAdjust(idx, sign) {
+    spOpenIdx = null;
+    if (scoreStep === null) {
+      spPending = { idx, sign };
+      renderPlayers();
+    } else {
+      players[idx].score += sign * scoreStep;
+      renderPlayers();
+    }
+  }
+
+  // 点击分数：就地变成输入框，可输入任意整数（含负数）
+  function startEditScore(row, idx) {
+    const old = row.querySelector('.pscore');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'pscore-input';
+    input.value = players[idx].score;
+    row.replaceChild(input, old);
+    input.focus();
+    input.select();
+    const commit = () => {
+      const v = parseIntAllowNeg(input.value, players[idx].score);
+      players[idx].score = v;
+      renderPlayers();
+    };
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+      if (e.key === 'Escape') { input.removeEventListener('blur', commit); renderPlayers(); }
+    });
+  }
+
+  // ---- 添加玩家 ----
+  $t('spAdd').onclick = () => {
+    const nameEl = $t('spName'), initEl = $t('spInit');
+    let name = nameEl.value.trim();
+    if (!name) name = '玩家' + (players.length + 1);
+    const score = parseIntAllowNeg(initEl.value, 0);
+    players.push({ name, score });
+    nameEl.value = '';
+    initEl.value = '0';
+    spOpenIdx = null;
+    renderPlayers();
+  };
+  $t('spName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $t('spAdd').click(); } });
+  $t('spInit').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $t('spAdd').click(); } });
+
+  // ---- 步长选择：±1 / ±5 / ±10，再点已选中的可取消（取消后点 ± 就地输入） ----
+  document.querySelectorAll('#spSteps .preset').forEach(chip => {
+    chip.onclick = () => {
+      if (chip.classList.contains('on')) {
+        chip.classList.remove('on');
+        scoreStep = null;
+      } else {
+        scoreStep = +chip.dataset.step;
+        document.querySelectorAll('#spSteps .preset').forEach(x => x.classList.toggle('on', x === chip));
+      }
+    };
+  });
+
+  // ---- 排序方式：升序 / 降序 二选一 ----
+  document.querySelectorAll('#spSortSeg .preset').forEach(chip => {
+    chip.onclick = () => {
+      scoreDesc = chip.dataset.order === 'desc';
+      document.querySelectorAll('#spSortSeg .preset').forEach(x => x.classList.toggle('on', x === chip));
+      spOpenIdx = null;
+      renderPlayers();
+    };
+  });
+
+  // ---- 清零 / 清空 ----
+  $t('spZero').onclick = () => {
+    spOpenIdx = null;
+    players.forEach(p => p.score = 0);
+    renderPlayers();
+  };
+  $t('spClear').onclick = () => {
+    players = [];
+    spPending = null;
+    spOpenIdx = null;
+    scoreStep = 1;
+    document.querySelectorAll('#spSteps .preset').forEach(x => x.classList.toggle('on', x.dataset.step === '1'));
+    renderPlayers();
+  };
+</script>
+</body>
+</html>
