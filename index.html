@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="FlEBqXTsiCPEvCkof4EGfv">
 <head data-page-node-id="qWA722mKrV9QsrRrADbNDv">
 <meta charset="UTF-8" data-page-node-id="kmaKfq1UBnnYVJoQN25Wiu">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" data-page-node-id="krj6mEOMI5ibvJ5R7OJNES">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" data-page-node-id="krj6mEOMI5ibvJ5R7OJNES">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -10,19 +10,56 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+  /* 手机安全区（刘海 / 状态栏 / 底部手势条）。开了 viewport-fit=cover 才能读到值，
+     读不到时全是 0，等价于原来的固定 padding，不会影响桌面浏览器。 */
+  :root {
+    /* 顶栏基准留白：不依赖 env() 也能避开手机状态栏（很多内嵌浏览器把 env 读成 0） */
+    --topbase: 30px;
+    /* 房间角标再往下让一点：有些手机的浏览器工具栏会压住视口最上面一截，
+       只靠 --topbase 时角标还会被切掉一点，这里额外下移 */
+    --chipdrop: 18px;
+    --sat: env(safe-area-inset-top, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+  }
+
   body {
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
     background: linear-gradient(160deg, #fef6e4 0%, #ffd8a8 100%);
     min-height: 100vh;
+    min-height: 100dvh;
     color: #3a2e2a;
-    padding: 20px 16px 40px;
+    padding: calc(var(--topbase) + var(--sat)) calc(16px + var(--sar)) calc(40px + var(--sab)) calc(16px + var(--sal));
     max-width: 520px;
     margin: 0 auto;
   }
 
-  header { text-align: center; margin-bottom: 24px; }
-  header h1 { font-size: 28px; letter-spacing: 2px; }
+  /* 顶栏：左边「主页」，中间标题。房间里右上角还有一个固定的房间角标，
+     所以 body.chip-on 时给 header 让出上面那 30px，标题不会被角标压掉一截。 */
+  header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 22px; position: relative;
+  }
+  header h1 {
+    flex: 1; min-width: 0; text-align: center;
+    font-size: clamp(19px, 5.4vw, 26px); letter-spacing: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
   header p { font-size: 13px; color: #a0785a; margin-top: 6px; }
+  #btnHome {
+    flex: none; white-space: nowrap;
+    border: 1.5px solid #e0b98a; border-radius: 12px;
+    background: #fff; color: #a0785a; font-weight: 800;
+    font-size: 12.5px; padding: 6px 10px; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(160, 100, 40, .1);
+  }
+  #btnHome:active { transform: scale(.96); }
+  body.at-home #btnHome { display: none; }
+  /* 和左侧按钮等宽的占位，让标题相对整行居中，而不是在剩余空间里居中 */
+  header .hd-gap { flex: none; width: 64px; }
+  /* 房间角标常驻在右上角：顶栏整体下移，给它让位 */
+  body.chip-on header { padding-top: calc(36px + var(--chipdrop)); }
 
   .card {
     background: #fffdf8;
@@ -154,6 +191,72 @@
     transition: all .15s; user-select: none;
   }
   .seg.on { background: #ff8a3d; border-color: #ff8a3d; color: #fff; }
+  /* 主页「操作权限」分段开关（小型） */
+  .perm-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; border-bottom: 1px dashed #f0dcc0;
+  }
+  .perm-row:last-child { border-bottom: none; }
+  /* 「操作权限」标题：占整行，下面三行权限各占满宽，窄屏也放得下 */
+  .perm-head {
+    margin: 12px 0 2px; font-size: 13.5px; font-weight: 800; color: #8a7460;
+  }
+  /* 三行权限的标题要对齐：emoji 各自宽度不同，单独放进定宽的小格子里，
+     后面「抽词器 / 计时器 / 计分板」和下面的说明文字才会从同一个 x 开始 */
+  .perm-name {
+    flex: 1; min-width: 0; display: flex; gap: 7px; align-items: flex-start;
+    font-size: 13.5px; font-weight: 800; color: #5a4634; line-height: 1.3;
+  }
+  .perm-name .perm-ic {
+    flex: none; width: 18px; text-align: center; font-style: normal;
+    font-size: 13.5px; line-height: 1.3;
+  }
+  .perm-name .perm-txt { flex: 1; min-width: 0; }
+  .perm-name small { display: block; font-size: 11px; font-weight: 600; color: #b09a82; margin-top: 1px; }
+  .seg-sm { flex: none; width: 76px; padding: 7px 0; font-size: 12.5px; border-radius: 10px; }
+  /* 房间里非房主的只读提示条 */
+  .ro-banner {
+    display: none; margin: 0 0 10px;
+    background: #eef3f8; border: 1.5px solid #b9c9d8; border-radius: 12px;
+    padding: 8px 12px; font-size: 12.5px; font-weight: 700; color: #46506a; line-height: 1.45;
+  }
+  .ro-banner.on { display: block; }
+  /* 非房主只读：对应区域的可操作控件整体禁掉 */
+  body.ro-draw .draw-ctl, body.ro-timer .timer-ctl, body.ro-score .score-ctl {
+    pointer-events: none;
+  }
+  body.ro-draw .draw-ctl, body.ro-score .score-ctl {
+    opacity: .45;
+  }
+  /* 计时器区域不整体淡化（父级 opacity 会连子元素一起变灰，全屏按钮就没法单独恢复了），
+     只淡化真正不能按的那几个按钮；「全屏」只是看，谁都能用，保持正常样式。 */
+  body.ro-timer .timer-ctl #timerMain,
+  body.ro-timer .timer-ctl #timerSkip,
+  body.ro-timer .timer-ctl #timerReset { opacity: .45; }
+  /* 卡片本身不整体变淡（标题跟着变淡很难看），只淡化里面的操作行 */
+  body.ro-draw .card.draw-ctl { opacity: 1; }
+  body.ro-draw .card.draw-ctl .cats,
+  body.ro-draw .card.draw-ctl .quick-row,
+  body.ro-draw .card.draw-ctl .num-row,
+  body.ro-draw .card.draw-ctl .num-hint { opacity: .45; }
+  /* 「全屏」只是把计时器放大显示，谁都能用：父级禁点后单独放开它 */
+  body.ro-timer #timerFull { pointer-events: auto; }
+  /* 主按钮/全屏按钮/悬浮条带内联 pointer-events，需 !important 才能真正禁掉 */
+  body.ro-timer #timerMain, body.ro-timer #fsMain, body.ro-timer #mtToggle { pointer-events: none !important; }
+  body.ro-score .score-row .pbtn,
+  body.ro-score .score-row .pscore,
+  body.ro-score .score-row .sp-edit,
+  body.ro-score .score-row .swipe-del { pointer-events: none; opacity: .45; }
+  /* 「只有房主能改」的控件：由 applyPermUI 挂 .ro-off + inert 一起关掉。
+     翻回合、本回合/累计、排序、计分方法说明这些纯查看的东西不加这个标记，任何时候都能用。 */
+  [data-host].ro-off { pointer-events: none; }
+  [data-host].ro-off:not(.card) { opacity: .45; }
+  .room-draw-bar {
+    display: flex; align-items: center; gap: 10px; justify-content: space-between;
+    margin-top: 10px; padding: 8px 12px;
+    background: #fff; border: 1.5px dashed #e0b98a; border-radius: 12px;
+    font-size: 12.5px; font-weight: 700; color: #a0785a;
+  }
   .cfg-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
   .cfg-label { width: 76px; font-size: 14px; color: #7c4a21; font-weight: 600; }
   .mini-btn {
@@ -217,6 +320,20 @@
     text-align: center; font-size: 13px; color: #a0785a;
     letter-spacing: 2px; margin: -6px 0 14px;
   }
+  /* 页面标题行：标题居左、权限角标贴右 */
+  .sec-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; margin: -6px 0 14px;
+  }
+  .sec-head .sec-title { margin: 0; }
+  .perm-badge {
+    display: none; flex: none;
+    font-size: 10.5px; font-weight: 800; line-height: 1;
+    padding: 4px 8px; border-radius: 999px;
+    background: #fff; border: 1px solid #e3d5c0; color: #a0785a;
+    white-space: nowrap; user-select: none;
+  }
+  .perm-badge.host-only { background: #fdf1e3; border-color: #e8c79e; color: #b06a2c; }
   /* 可输入的秒数框 */
   .cfg-input {
     flex: 1; width: 0; min-width: 0; text-align: center;
@@ -300,6 +417,103 @@
   .sp-qcancel {
     height: 34px; padding: 0 14px; border-radius: 10px; border: 1.5px solid #e0b98a; flex: none;
     background: #fff; color: #8a6a50; font-weight: 700; font-size: 13px; cursor: pointer;
+  }
+  /* 多人房间 */
+  /* ===== 主页 ===== */
+  body.at-home > :not(#home):not(script):not(style) { display: none !important; }
+  body:not(.at-home) #home { display: none; }
+  #home { min-height: 100vh; padding: 7vh 18px 40px; }
+  .home-box { max-width: 430px; margin: 0 auto; }
+  .home-hero { text-align: center; margin-bottom: 22px; }
+  .home-hero .logo { font-size: 46px; line-height: 1; }
+  .home-hero h1 { font-size: 30px; font-weight: 900; margin: 10px 0 6px; color: #5a4634; letter-spacing: 2px; }
+  .home-hero p { font-size: 13px; color: #b09a82; font-weight: 600; }
+  .home-menu { display: flex; flex-direction: column; gap: 12px; }
+  .home-roomcard { margin-bottom: 14px; }
+  .home-roomcard h2 { margin-bottom: 8px; }
+  .home-big { display: block; text-align: left; padding: 16px 18px; font-size: 17px; letter-spacing: 1px; }
+  .home-big small { display: block; font-size: 11.5px; font-weight: 600; letter-spacing: 0; margin-top: 4px; opacity: .75; }
+  .home-big.ghost small { color: #a08a70; }
+  .home-form h2 { margin-bottom: 12px; }
+  .home-field { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+  .home-field > label { flex: none; width: 74px; font-size: 13.5px; font-weight: 800; color: #8a7460; text-align: right; }
+  .home-field .cfg-input { flex: 1; }
+  #homeErr, #joinErr { color: #c0392b; font-weight: 700; margin-top: 10px; }
+
+  /* ===== 房间角标 + 成员弹层 ===== */
+  #roomChip {
+    position: fixed; top: calc(var(--topbase) + var(--sat) + var(--chipdrop) - 2px); right: calc(10px + var(--sar)); z-index: 60;
+    display: flex; align-items: center; gap: 7px; max-width: 66vw;
+    background: rgba(90, 70, 52, .94); color: #ffe9cf;
+    border-radius: 999px; padding: 6px 8px 6px 12px;
+    font-size: 12px; font-weight: 800; cursor: pointer;
+    box-shadow: 0 3px 10px rgba(80, 60, 40, .25);
+    user-select: none; -webkit-tap-highlight-color: transparent;
+  }
+  #roomChip:active { transform: scale(.96); }
+  /* 房间名与我的昵称用不同样式区分：房间＝房子图标＋常规字重；我＝带「我」标签的亮色药丸 */
+  #roomChip .chip-seg { display: flex; align-items: center; gap: 4px; min-width: 0; }
+  #roomChip .chip-room { max-width: 30vw; }
+  #roomChip .chip-ic { font-size: 11px; opacity: .85; flex: none; }
+  #roomChip .chip-me {
+    max-width: 28vw; gap: 5px; flex: none;
+    background: rgba(255, 233, 207, .18); border-radius: 999px; padding: 3px 9px 3px 3px;
+  }
+  #roomChip .chip-tag {
+    flex: none; font-size: 10px; font-weight: 900; line-height: 1.5;
+    color: #7a4a12; background: #ffd98a; border-radius: 999px; padding: 0 6px;
+  }
+  #roomChip .chip-txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #roomPopWrap {
+    position: fixed; inset: 0; z-index: 90; display: none;
+    align-items: center; justify-content: center; padding: 22px;
+    background: rgba(60, 45, 30, .45);
+  }
+  #roomPopWrap.on { display: flex; }
+  #roomPop { width: 100%; max-width: 360px; max-height: 80vh; overflow: auto; }
+  #roomPop h2 { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  #roomPop h2 small { font-size: 12px; font-weight: 800; color: #b35c1e; letter-spacing: .1em; }
+  .pm-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 4px; border-bottom: 1px dashed #ead9c2;
+    font-size: 14.5px; font-weight: 700; color: #5a4634;
+  }
+  .pm-row:last-child { border-bottom: none; }
+  .pm-row .pm-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pm-row.away .pm-name { color: #b8a88f; }
+  .pm-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #7fb07f; }
+  .pm-row.away .pm-dot { background: #cdbba6; }
+  .pm-tag {
+    flex: none; font-size: 10.5px; font-weight: 800; border-radius: 999px;
+    padding: 2px 8px; background: #fff3e2; color: #b35c1e; border: 1px solid #e8cba2;
+  }
+  .pm-tag.me { background: #eef4e9; color: #5f8a63; border-color: #c4d8bd; }
+  .pm-count { font-size: 12px; color: #b09a82; font-weight: 700; }
+
+  /* 成员离开后，计分板上的那一行保留分数但置灰。
+     不能用 opacity 做置灰：行变半透明后，底下那层红色的「删除」按钮（左滑结构）
+     会透出来，看起来就像删除按钮压在玩家行上。改用不透明的灰配色。 */
+  .score-row.away {
+    background: #f3efe9; border-color: #d9cfc2;
+    --pc-bg: #f3efe9; --pc-bd: #d3c8ba; --pc-ink: #9b8f81; --pc-btn: #e9e1d5;
+  }
+  .score-row.away .pscore { color: #9b8f81; border-bottom-color: #d3c8ba; }
+
+  /* 内联确认条（不再用系统 confirm） */
+  .room-ask {
+    display: flex; align-items: center; gap: 8px; margin-top: 10px;
+    background: #fff2e4; border: 1.5px solid #efc49a; border-radius: 12px;
+    padding: 8px 10px; font-size: 12.5px; font-weight: 700; color: #a45f22;
+    line-height: 1.45;
+  }
+  .room-ask > span { flex: 1; }
+  .room-ask .t-btn { flex: none; width: auto; padding: 8px 14px; font-size: 13px; letter-spacing: 0; }
+  .room-ask #popAskYes { background: linear-gradient(135deg, #ff8a3d, #ff5e7e); color: #fff; }
+  .room-row { display: flex; gap: 8px; align-items: center; }
+  .room-row .t-btn { flex: 1; }
+  .room-code-input {
+    flex: 1; text-align: center; text-transform: uppercase; letter-spacing: .18em;
+    font-weight: 800; font-size: 15px; padding: 6px 8px;
   }
   /* 计分方法：可折叠说明 */
   .sp-hint-wrap { margin: 4px 0 10px; }
@@ -441,7 +655,7 @@
 
   /* ===== 悬浮计时条 ===== */
   #miniTimer {
-    position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%);
+    position: fixed; left: 50%; bottom: calc(12px + var(--sab)); transform: translateX(-50%);
     width: calc(100% - 24px); max-width: 480px;
     display: none; align-items: center; gap: 10px;
     padding: 9px 12px 9px 16px;
@@ -469,7 +683,29 @@
     font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer;
   }
   #miniTimer .mt-btn:active { background: rgba(255, 255, 255, .3); }
-  body.mini-open { padding-bottom: 96px; }
+  /* 仅房主可操作时：悬浮条上不再放「暂停/继续」按钮，只留一个「查看」入口，
+     避免让人以为点一下就能控制计时器（实际只是跳到计时器页面）。 */
+  #miniTimer .mt-view {
+    flex: none; white-space: nowrap;
+    font-size: 12px; font-weight: 800; opacity: .82;
+    padding: 7px 2px 7px 8px;
+  }
+  body.mini-open { padding-bottom: calc(96px + var(--sab)); }
+  /* 轻提示：房主发词等需要提醒一下的事件（2~3 秒自动消失） */
+  #toast {
+    position: fixed; left: 50%; top: calc(var(--topbase) + var(--sat));
+    transform: translateX(-50%) translateY(-8px);
+    max-width: calc(100vw - 32px);
+    background: rgba(58, 46, 42, .96); color: #fff;
+    font-size: 13px; font-weight: 700; line-height: 1.45;
+    padding: 10px 16px; border-radius: 14px; text-align: center;
+    box-shadow: 0 8px 24px rgba(60, 30, 10, .32);
+    opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s;
+    z-index: 120;
+  }
+  #toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+  /* 只读（仅房主可操作计时）时，全屏层的主按钮也只做提示，不再像是能按 */
+  body.ro-timer #fsMain, body.ro-timer #fsSkip { opacity: .45; }
 
   /* ===== 全屏计时 ===== */
   #fsTimer {
@@ -503,10 +739,131 @@
   .fs-btn:active { transform: scale(.96); }
 </style>
 </head>
-<body data-page-node-id="BGrz7Np0DlGTuhBzkDzrmT">
+<body data-page-node-id="BGrz7Np0DlGTuhBzkDzrmT" class="at-home">
+
+<!-- ===== 主页：选择进入方式 ===== -->
+<div id="home">
+  <div class="home-box">
+    <div class="home-hero">
+      <div class="logo">🎲</div>
+      <h1>桌游助手</h1>
+      <p>抽词 · 计时 · 计分，和朋友一起玩</p>
+    </div>
+
+    <div class="card home-roomcard" id="homeRoomCard" style="display:none">
+      <h2>🔄 房间进行中</h2>
+      <div class="relay-hint">你还在房间 <b id="homeRoomCode" style="letter-spacing:.1em">------</b>（<span id="homeRoomName"></span>）里，分数仍在同步。</div>
+      <div class="t-btns" id="homeRoomBtns">
+        <button class="t-btn ghost" id="btnBackRoom">回到房间</button>
+        <button class="t-btn ghost" id="btnLeaveFromHome">退出房间</button>
+      </div>
+      <div class="room-ask" id="homeAsk" style="display:none">
+        <span>确定退出房间？退出后回到离线模式，这台设备上的分数会保留。</span>
+        <button class="t-btn ghost" id="homeAskNo">取消</button>
+        <button class="t-btn" id="homeAskYes">确认退出</button>
+      </div>
+    </div>
+
+    <div class="card home-menu" id="homeMenu">
+      <button class="t-btn ghost home-big" id="btnGoCreate">🏠 创建房间<small>需联网 · 和朋友共享同一块计分板</small></button>
+      <button class="t-btn ghost home-big" id="btnGoJoin">🔗 加入房间<small>输入房间码，加入朋友创建的局</small></button>
+      <button class="t-btn ghost home-big" id="btnGoOffline">📱 离线模式<small>不用联网，抽词、计时、计分都在这台设备上进行</small></button>
+    </div>
+
+    <div class="card home-form" id="createForm" style="display:none">
+      <h2>🏠 创建房间</h2>
+      <div class="home-field">
+        <label>房间名</label>
+        <input type="text" class="cfg-input" id="fRoomName" maxlength="20" placeholder="请输入房间名" autocomplete="off">
+      </div>
+      <div class="home-field">
+        <label>最大人数</label>
+        <div class="num-row" style="flex:1">
+          <button class="num-btn" id="mpMinus">−</button>
+          <input type="text" class="cfg-input" id="fMaxPlayers" inputmode="numeric" maxlength="2" value="8" style="width:60px;text-align:center;flex:none">
+          <button class="num-btn" id="mpPlus">＋</button>
+        </div>
+      </div>
+      <div class="home-field">
+        <label>我的昵称</label>
+        <input type="text" class="cfg-input" id="fHostName" maxlength="12" placeholder="请输入你的昵称" autocomplete="off">
+      </div>
+      <div class="perm-head">操作权限</div>
+      <div>
+        <div class="perm-row" data-area="draw">
+          <div class="perm-name"><i class="perm-ic">🎨</i><span class="perm-txt">抽词器<small>设置抽取数量、开始抽取</small></span></div>
+          <span class="seg seg-sm on" data-v="all">所有人</span>
+          <span class="seg seg-sm" data-v="host">仅房主</span>
+        </div>
+        <div class="perm-row" data-area="timer">
+          <div class="perm-name"><i class="perm-ic">⏱</i><span class="perm-txt">计时器<small>开始、暂停、跳过</small></span></div>
+          <span class="seg seg-sm on" data-v="all">所有人</span>
+          <span class="seg seg-sm" data-v="host">仅房主</span>
+        </div>
+        <div class="perm-row" data-area="score">
+          <div class="perm-name"><i class="perm-ic">🏆</i><span class="perm-txt">计分板<small>加减分、添加玩家、撤销</small></span></div>
+          <span class="seg seg-sm on" data-v="all">所有人</span>
+          <span class="seg seg-sm" data-v="host">仅房主</span>
+        </div>
+      </div>
+      <div class="relay-hint" id="homeErr" style="display:none"></div>
+      <div class="room-row" style="margin-top:14px">
+        <button class="t-btn ghost" id="btnCreateBack">返回</button>
+        <button class="t-btn ghost" id="btnCreateOk">创建并进入</button>
+      </div>
+      <div class="relay-hint" style="margin-top:8px">创建后生成房间码，朋友在主页点「加入房间」输码即可。房间功能需要电脑上运行 node server.js。</div>
+    </div>
+
+    <div class="card home-form" id="joinForm" style="display:none">
+      <h2>🔗 加入房间</h2>
+      <div class="home-field">
+        <label>房间码</label>
+        <input type="text" class="cfg-input room-code-input" id="fJoinCode" maxlength="8" placeholder="请输入房间码"
+               autocomplete="off" autocapitalize="characters" spellcheck="false">
+      </div>
+      <div class="home-field">
+        <label>我的昵称</label>
+        <input type="text" class="cfg-input" id="fJoinName" maxlength="12" placeholder="请输入你的昵称" autocomplete="off">
+      </div>
+      <div class="relay-hint" id="joinErr" style="display:none"></div>
+      <div class="room-row" style="margin-top:14px">
+        <button class="t-btn ghost" id="btnJoinBack">返回</button>
+        <button class="t-btn ghost" id="btnJoinOk">加入房间</button>
+      </div>
+      <div class="relay-hint" style="margin-top:8px">加入后你的昵称会自动出现在共享计分板里。</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 房间角标（右上角，常驻显示房间名 + 我的昵称） ===== -->
+<div id="roomChip" style="display:none" title="点开查看房间成员">
+  <span class="chip-seg chip-room"><span class="chip-ic">🏠</span><span class="chip-txt" id="chipRoom">--</span></span>
+  <span class="chip-seg chip-me"><span class="chip-tag">我</span><span class="chip-txt" id="chipMe">--</span></span>
+</div>
+
+<!-- ===== 房间成员弹层 ===== -->
+<div id="roomPopWrap">
+  <div class="card" id="roomPop">
+    <h2>👥 <span id="popRoomName">房间</span><small id="popCode">------</small><span class="pm-count" id="popCount"></span></h2>
+    <div id="popMembers"></div>
+    <div class="relay-hint" style="margin-top:8px">加入房间的人会自动出现在计分板里；有人离开后分数保留、那一行置灰，也可以左滑删除。</div>
+    <div class="room-ask" id="popAsk" style="display:none">
+      <span>离开后本机保留当前分数、回到单机模式，其他人的分数不受影响。确定离开？</span>
+      <button class="t-btn ghost" id="popAskNo">取消</button>
+      <button class="t-btn" id="popAskYes">确认离开</button>
+    </div>
+    <div class="room-row" id="popActions" style="margin-top:12px">
+      <button class="t-btn ghost" id="popClose">关闭</button>
+      <button class="t-btn ghost" id="popCopy">复制房间码</button>
+      <button class="t-btn ghost" id="popLeave">离开房间</button>
+    </div>
+  </div>
+</div>
 
 <header data-page-node-id="oAxHoJvtE479LyTx9OnkVY">
+  <button id="btnHome" type="button">🏠 主页</button>
   <h1 data-page-node-id="fDOfH3cT9dgphsXUBLVNtH">🎲 桌游助手</h1>
+  <span class="hd-gap" aria-hidden="true"></span>
 </header>
 
 <div class="main-tabs">
@@ -516,9 +873,13 @@
 </div>
 
 <div id="drawSection">
-<div class="sec-title">—— 选词抽词 ——</div>
+<div class="sec-head">
+  <div class="sec-title">—— 选词抽词 ——</div>
+  <span class="perm-badge" id="permDraw"></span>
+</div>
+<div class="ro-banner" id="roDrawBanner"></div>
 
-<div class="card" data-page-node-id="orJM4ILM4RUVIcwGGguJBy">
+<div class="card draw-ctl" data-host="draw" data-page-node-id="orJM4ILM4RUVIcwGGguJBy">
   <h2 data-page-node-id="cQR86pEmKP43wdgGmHiz3X">🗂 选择分类（可多选）</h2>
   <div class="cats" id="cats" data-page-node-id="LZnFY22g1ECAqKqRAOqNN8"></div>
   <div class="quick-row" data-page-node-id="jAFoXEGln5Y3bcnpQkwCIL">
@@ -527,7 +888,7 @@
   </div>
 </div>
 
-<div class="card" data-page-node-id="I0G14kaHJfurBUwELurvGR">
+<div class="card draw-ctl" data-host="draw" data-page-node-id="I0G14kaHJfurBUwELurvGR">
   <h2 data-page-node-id="6blH2QjTWogBaMNCmUlLyO">🔢 抽取数量</h2>
   <div class="num-row" data-page-node-id="yzE4OCDHhrIMAdGbu1HgN8">
     <button class="num-btn" id="minus" data-page-node-id="cyooSdVsXLQAZIJxjtT5Ny">−</button>
@@ -537,25 +898,34 @@
   <div class="num-hint" id="numHint" data-page-node-id="LcDFbC6O7HzzGJgCt5PCgu"></div>
 </div>
 
-<button id="drawBtn" data-page-node-id="qxXH5ADZTEzgcYd66shgCn">开始抽词</button>
+<button id="drawBtn" class="draw-ctl" data-host="draw" data-page-node-id="qxXH5ADZTEzgcYd66shgCn">开始抽词</button>
+
+<div class="room-draw-bar" id="roomDrawBar" style="display:none">
+  <span id="deckInfo">词池未建立</span>
+  <button class="quick-btn draw-ctl" id="deckReset" data-host="draw">重置词池</button>
+</div>
 
 <div id="result" data-page-node-id="ncTfA4tuRRxuHsTDIVqPC8"></div>
 </div><!-- /drawSection -->
 
 <div id="timerSection" style="display:none">
-<div class="sec-title">—— 游戏计时 ——</div>
+<div class="sec-head">
+  <div class="sec-title">—— 游戏计时 ——</div>
+  <span class="perm-badge" id="permTimer"></span>
+</div>
+<div class="ro-banner" id="roTimerBanner"></div>
 
 <div class="card" id="timerCard">
   <h2>⏱ 游戏计时器</h2>
 
-  <div class="mode-tabs">
+  <div class="mode-tabs" data-host="timer">
     <div class="seg on" data-mode="normal">普通模式</div>
     <div class="seg" data-mode="relay">接龙模式</div>
   </div>
 
   <!-- 通用：倒数语音播报设置 -->
   <div id="cfgCommon">
-    <div class="cfg-row">
+    <div class="cfg-row" data-host="timer">
       <span class="cfg-label">倒数提示</span>
       <div class="presets-inline">
         <span class="preset" data-key="alertSec" data-v="0">关</span>
@@ -566,6 +936,13 @@
       </div>
     </div>
     <div class="relay-hint" style="margin:-2px 0 10px">剩设定秒数时响一声提示音；归零时结束音 + 语音「时间到」。</div>
+    <div class="cfg-row" id="sndRow" style="display:none">
+      <span class="cfg-label">提示音范围</span>
+      <div class="presets-inline" id="sndSeg">
+        <span class="preset on" data-snd="0">仅房主的设备</span>
+        <span class="preset" data-snd="1">所有人</span>
+      </div>
+    </div>
     <div class="cfg-row">
       <span class="cfg-label">屏幕常亮</span>
       <div class="presets-inline" id="wlSeg">
@@ -577,7 +954,7 @@
   </div>
 
   <!-- 普通模式配置 -->
-  <div id="cfgNormal">
+  <div id="cfgNormal" data-host="timer">
     <div class="cfg-row">
       <span class="cfg-label">游戏轮数</span>
       <button class="mini-btn" id="rMinus">−</button>
@@ -599,7 +976,7 @@
   </div>
 
   <!-- 接龙模式配置 -->
-  <div id="cfgRelay" style="display:none">
+  <div id="cfgRelay" style="display:none" data-host="timer">
     <div class="cfg-row">
       <span class="cfg-label">玩家人数</span>
       <button class="mini-btn" id="pMinus">−</button>
@@ -639,7 +1016,7 @@
     <div id="timerDisplay">00:00.00</div>
   </div>
 
-  <div class="t-btns">
+  <div class="t-btns timer-ctl">
     <button class="t-btn" id="timerMain">开始</button>
     <button class="t-btn ghost" id="timerSkip" style="display:none">跳过</button>
     <button class="t-btn ghost" id="timerReset" style="display:none">重置</button>
@@ -649,12 +1026,16 @@
 </div><!-- /timerSection -->
 
 <div id="scoreSection" style="display:none">
-<div class="sec-title">—— 桌游计分板 ——</div>
+<div class="sec-head">
+  <div class="sec-title">—— 桌游计分板 ——</div>
+  <span class="perm-badge" id="permScore"></span>
+</div>
+<div class="ro-banner" id="roScoreBanner"></div>
 
-<div class="card">
+<div class="card score-ctl" data-host="score">
   <h2>➕ 添加玩家</h2>
   <div class="score-add-row">
-    <input type="text" class="cfg-input name-in" id="spName" placeholder="玩家姓名" maxlength="10">
+    <input type="text" class="cfg-input name-in" id="spName" placeholder="请输入玩家姓名" maxlength="10">
     <input type="text" class="cfg-input" id="spInit" inputmode="numeric" value="0" title="初始分数，可填负数">
   </div>
   <div class="relay-hint" style="margin:6px 0 0">右侧为初始分数，可填负数；留空姓名则自动编号「玩家N」。</div>
@@ -663,7 +1044,7 @@
 
 <div class="card" id="spCard" style="display:none">
   <h2>🏆 玩家分数</h2>
-  <div class="cfg-row">
+  <div class="cfg-row score-ctl" data-host="score">
     <span class="cfg-label">单次加减</span>
     <div class="presets-inline" id="spSteps">
       <span class="preset on" data-step="1">±1</span>
@@ -708,8 +1089,8 @@
         <span class="preset on" data-disp="round">本回合</span>
         <span class="preset" data-disp="total">累计总分</span>
       </div>
-      <button class="scope-btn" id="rAdd">＋ 回合</button>
-      <button class="scope-btn" id="rDel">删除</button>
+      <button class="scope-btn" id="rAdd" data-host="score">＋ 回合</button>
+      <button class="scope-btn" id="rDel" data-host="score">删除</button>
     </div>
     <div class="relay-hint" id="dispHint" style="margin-top:6px">只有 1 个回合时，「本回合」与「累计总分」相同。</div>
   </div>
@@ -731,11 +1112,11 @@
   </div>
   <div class="relay-hint" id="sortHint">位置固定：加减分时玩家行不会移动，手指可以连续点同一处。</div>
 
-  <div class="sp-toolbar">
+  <div class="sp-toolbar score-ctl" data-host="score">
     <button class="t-btn ghost" id="spUndo">↶ 撤销</button>
     <button class="t-btn ghost" id="spRedo">↷ 前进</button>
   </div>
-  <div class="sp-toolbar">
+  <div class="sp-toolbar score-ctl" data-host="score">
     <button class="t-btn ghost" id="spZero">本回合清零</button>
     <button class="t-btn ghost" id="spClear">清空玩家</button>
   </div>
@@ -746,6 +1127,7 @@
   <span class="mt-phase" id="mtPhase">第 1 轮</span>
   <span class="mt-time" id="mtTime">00:00.00</span>
   <button class="mt-btn" id="mtToggle">暂停</button>
+  <span class="mt-view" id="mtView" style="display:none">查看 ›</span>
 </div>
 
 <div id="fsTimer">
@@ -759,10 +1141,23 @@
 </div>
 
 <div id="flash"></div>
-<div id="verStamp" style="text-align:center;font-size:11px;color:#cdbba6;margin-top:6px;user-select:none">版本 v12 · 10/29</div>
+<div id="toast"></div>
+<div id="verStamp" style="text-align:center;font-size:11px;color:#cdbba6;margin-top:6px;user-select:none">v3.3 yct · 10/30</div>
 
-<script src="words.js"></script>
+<script src="words.js?v=33"></script>
+<script src="room.js?v=33"></script>
 <script>
+  // 页面是新的、room.js 却是缓存里的旧版（最常见的就是别人一直开着旧页面没刷新）——
+  // 这种情况下客户端根本没有收词逻辑，所以这里补一次自动刷新（每个标签页只刷一次，避免循环）
+  (function () {
+    try {
+      if (!window.GPRoom || GPRoom.proto === 33) return;
+      if (sessionStorage.getItem('gpProtoFix')) return;
+      sessionStorage.setItem('gpProtoFix', '1');
+      location.reload();
+    } catch (e) { }
+  })();
+
   const catsBox = document.getElementById('cats');
   const numVal = document.getElementById('numVal');
   const numHint = document.getElementById('numHint');
@@ -850,18 +1245,52 @@
     return a;
   }
 
-  drawBtn.onclick = () => {
-    if (selected.size === 0) { alert('至少选一个分类哦'); return; }
-    // 汇总词池：记录词 + 所属分类
+  // ---- 房间共享词池辅助 ----
+  const WORD_CAT = {};   // 词 → 分类（服务端只存词，显示时反查分类）
+  Object.keys(WORD_BANK).forEach(c => WORD_BANK[c].forEach(w => { WORD_CAT[w] = c; }));
+  function localPool() {
     const pool = [];
     selected.forEach(c => WORD_BANK[c].forEach(w => pool.push({ w, c })));
-    if (pool.length === 0) { alert('词池是空的，先往 words.js 里加点词吧'); return; }
-
-    const realCount = Math.min(count, pool.length);
-    const picked = shuffle(pool).slice(0, realCount);
-
+    return pool;
+  }
+  function roomPoolWords() {
+    const set = new Set();
+    selected.forEach(c => WORD_BANK[c].forEach(w => set.add(w)));
+    return [...set];
+  }
+  function roomPoolSig() {
+    return [...selected].sort().join(',') + '#' + roomPoolWords().length;
+  }
+  function updateDeckBar() {
+    const bar = document.getElementById('roomDrawBar');
+    if (!bar) return;
+    if (!window.GPRoom || !GPRoom.inRoom) { bar.style.display = 'none'; return; }
+    bar.style.display = 'flex';
+    const d = GPRoom.deck;
+    const roDraw = GPRoom.perm && GPRoom.perm.draw === 'host' && !GPRoom.isHost;
+    if (!d) {
+      document.getElementById('deckInfo').textContent = roDraw
+        ? '房主还没建立词池（建立后这里会显示剩余词数）'
+        : '共享词池未建立（点「开始抽词」自动按所选分类建立）';
+      return;
+    }
+    let text = '共享词池剩余 ' + d.remaining + ' / ' + d.total;
+    // 非房主不选分类，直接显示房主选的是哪几类（分类名存在词池签名里）
+    if (roDraw && d.sig) {
+      const cats = String(d.sig).split('#')[0].split(',').filter(Boolean);
+      if (cats.length) text += ' · ' + cats.join('、');
+    }
+    document.getElementById('deckInfo').textContent = text;
+  }
+  function renderWords(items, note) {
     resultBox.innerHTML = '';
-    picked.forEach((item, i) => {
+    if (note) {
+      const tip = document.createElement('div');
+      tip.className = 'empty-tip';
+      tip.textContent = note;
+      resultBox.appendChild(tip);
+    }
+    items.forEach((item, i) => {
       const div = document.createElement('div');
       div.className = 'word-item';
       div.style.animationDelay = (i * 0.07) + 's';
@@ -871,9 +1300,120 @@
         '<div class="cat">' + item.c + '</div>';
       resultBox.appendChild(div);
     });
-    // 抽完滚到结果区
-    setTimeout(() => resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+    // 抽完滚到结果区（只在抽词页时才滚，别把在计分板/计时器页的人拽走）
+    const drawSec = document.getElementById('drawSection');
+    if (drawSec && drawSec.style.display !== 'none') {
+      setTimeout(() => resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+    }
+  }
+
+  // 房间里「房主一键给所有人发词」后，其他人靠这个事件拿到自己那一份
+  let toastTimer = null;
+  function toast(msg, ms) {
+    const el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('on'), ms || 3400);
+  }
+  function drawSectionVisible() {
+    const sec = document.getElementById('drawSection');
+    return !!sec && sec.style.display !== 'none';
+  }
+
+  function showMyDeal(words, note) {
+    const items = (words || []).map(w => ({ w, c: WORD_CAT[w] || '—' }));
+    renderWords(items, note);
+    updateDeckBar();
+    // 不在抽词页时，弹出的词是看不见的，给个提示免得以为没收到
+    if (!drawSectionVisible()) toast('🎲 房主给你发了 ' + items.length + ' 个词，点「🎨 抽词器」查看', 4200);
+  }
+
+  drawBtn.onclick = async () => {
+    if (selected.size === 0) { alert('至少选一个分类哦'); return; }
+    const inRoom = window.GPRoom && GPRoom.inRoom;
+
+    // ---- 房间模式：词池在服务端，大家从同一副牌里抽，永不重复 ----
+    if (inRoom) {
+      const words = roomPoolWords();
+      if (!words.length) { alert('词池是空的，先往 words.js 里加点词吧'); return; }
+      const sig = roomPoolSig();
+      // 抽词权限是「仅房主」时，房主点一次 = 给房间里每个人各发一份（互不重复）
+      const hostDeal = GPRoom.perm && GPRoom.perm.draw === 'host' && GPRoom.isHost;
+      try {
+        if (!GPRoom.deck) {
+          await GPRoom.buildDeck(words, sig);
+        } else if ((GPRoom.deck.sig || '') !== sig) {
+          // 所选分类和当前词池不一致：两次点击确认，避免一键清掉没抽完的词
+          if (!drawBtn.dataset.confirm) {
+            drawBtn.dataset.confirm = '1';
+            drawBtn.textContent = '分类已变化：再点一次重建词池';
+            setTimeout(() => { delete drawBtn.dataset.confirm; drawBtn.textContent = '开始抽词'; }, 2600);
+            return;
+          }
+          delete drawBtn.dataset.confirm;
+          drawBtn.textContent = '开始抽词';
+          await GPRoom.buildDeck(words, sig);
+        }
+        if (hostDeal) {
+          const r = await GPRoom.drawWords(count, { each: true });
+          const n = (r.dealt && r.dealt.members) || (GPRoom.members || []).length || 1;
+          const tail = r.deck && r.deck.remaining === 0 ? '；词已抽完，点「重置词池」可以再来一轮' : '';
+          showMyDeal(r.words, '已给房间里 ' + n + ' 人各发 ' + count + ' 个词（互不重复），下面是你自己这一份' + tail);
+          return;
+        }
+        const want = GPRoom.deck ? Math.min(count, GPRoom.deck.remaining) : count;
+        const r = await GPRoom.drawWords(want);
+        const items = (r.words || []).map(w => ({ w, c: WORD_CAT[w] || '—' }));
+        renderWords(items, r.deck && r.deck.remaining === 0 ? '词已抽完，点「重置词池」可以再来一轮' : '');
+        updateDeckBar();
+      } catch (e) {
+        const msg = e && e.message;
+        if (msg === 'deck_empty') {
+          renderWords([], '词已抽完，点「重置词池」可以再来一轮');
+        } else if (msg === 'forbidden_host') {
+          renderWords([], '本房间的抽词由房主操作');
+        } else {
+          renderWords([], '抽词失败（' + (msg || '网络异常') + '），词池未扣减，可重试');
+        }
+      }
+      return;
+    }
+
+    // ---- 离线模式：本地洗牌 ----
+    const pool = localPool();
+    if (pool.length === 0) { alert('词池是空的，先往 words.js 里加点词吧'); return; }
+
+    const realCount = Math.min(count, pool.length);
+    const picked = shuffle(pool).slice(0, realCount);
+    renderWords(picked);
   };
+
+  document.getElementById('deckReset').onclick = async () => {
+    if (!window.GPRoom || !GPRoom.inRoom) return;
+    const words = roomPoolWords();
+    if (!words.length) { alert('词池是空的，先往 words.js 里加点词吧'); return; }
+    try {
+      await GPRoom.buildDeck(words, roomPoolSig());
+      resultBox.innerHTML = '';
+      updateDeckBar();
+    } catch (e) {
+      if (e && e.message === 'forbidden_host') alert('本房间的抽词由房主操作');
+    }
+  };
+
+  if (window.GPRoom) {
+    GPRoom.on('status', updateDeckBar);
+    // 房主一键分词：其他人轮询到这里，看到自己那份
+    GPRoom.on('assign', a => {
+      if (a.by === GPRoom.me) return;        // 自己发起的发牌，点按钮时已经渲染过
+      const words = a.words || [];
+      if (!words.length) return;
+      showMyDeal(words, '房主发词了：你的 ' + words.length + ' 个词（和房间里其他人的都不一样）');
+    });
+  }
+  updateDeckBar();
 
   renderCats();
 </script>
@@ -883,7 +1423,7 @@
   const $t = id => document.getElementById(id);
   let tMode = 'normal';        // normal | relay
   let tState = 'idle';         // idle | running | paused | between | done
-  const cfg = { rounds: 3, roundSec: 60, players: 6, drawSec: 60, guessSec: 30, alertSec: 10 };
+  const cfg = { rounds: 3, roundSec: 60, players: 6, drawSec: 60, guessSec: 30, alertSec: 10, sndAll: false };
   let phases = [], pi = 0, remainMs = 0, lastTs = 0, rafId = null, gen = 0, alertFired = false;
   let curSection = 'draw';      // draw | timer | score
   let fsOn = false;             // 全屏计时层是否展开
@@ -907,8 +1447,8 @@
   }
   // 显式绑定每个配置
   function bindCtrl(key, minusId, plusId, step, min, max, after) {
-    $t(minusId).onclick = () => { if (tState !== 'idle') return; cfg[key] = Math.max(min, cfg[key] - step); setVal(key); clearPresets(key); after && after(); };
-    $t(plusId).onclick = () => { if (tState !== 'idle') return; cfg[key] = Math.min(max, cfg[key] + step); setVal(key); clearPresets(key); after && after(); };
+    $t(minusId).onclick = () => { if (tState !== 'idle' || !canOpTimer()) return; cfg[key] = Math.max(min, cfg[key] - step); setVal(key); clearPresets(key); after && after(); pushTimerSoon(); };
+    $t(plusId).onclick = () => { if (tState !== 'idle' || !canOpTimer()) return; cfg[key] = Math.min(max, cfg[key] + step); setVal(key); clearPresets(key); after && after(); pushTimerSoon(); };
     setVal(key);
   }
   bindCtrl('rounds', 'rMinus', 'rPlus', 1, 1, 20);
@@ -948,25 +1488,27 @@
 
     // 键入时：只保留数字，不钳制、不改写输入内容（避免打到一半被改成别的数）
     el.addEventListener('input', () => {
-      if (tState !== 'idle') { el.value = cfg[key]; return; }
+      if (tState !== 'idle' || !canOpTimer()) { el.value = cfg[key]; return; }
       const digits = String(el.value).replace(/\D/g, '').slice(0, 4);
       if (el.value !== digits) el.value = digits;
       if (digits !== '') {
         cfg[key] = clampVal(key, parseInt(digits, 10));
         clearPresets(key);
         if (key === 'players') updateRelayHint();
+        pushTimerSoon();
       }
     });
 
     // 离开输入框：把范围外的数字钳制好再回填
     el.addEventListener('blur', () => {
-      if (tState !== 'idle') return;
+      if (tState !== 'idle' || !canOpTimer()) { el.value = cfg[key]; return; }
       let v = parseInt(String(el.value).replace(/\D/g, ''), 10);
       if (isNaN(v)) v = cfg[key];
       cfg[key] = clampVal(key, v);
       el.value = cfg[key];
       refreshPresets();
       if (key === 'players') updateRelayHint();
+      pushTimerSoon();
     });
 
     // 回车 = 确认并收起键盘
@@ -979,30 +1521,39 @@
   document.querySelectorAll('.preset').forEach(p => {
     p.onclick = () => {
       if (tState !== 'idle') return;
+      if (!p.dataset.key) return;   // 屏幕常亮 / 提示音范围有自己的处理器
+      // 屏幕常亮是本机开关，不受房间权限限制；其余计时设置只有房主能改
+      if (!canOpTimer()) return;
       const key = p.dataset.key;
       cfg[key] = +p.dataset.v;
       setVal(key);
       document.querySelectorAll('.preset[data-key="' + key + '"]').forEach(x => x.classList.toggle('on', x === p));
+      pushTimerSoon();
     };
   });
 
   // ---- 模式切换 ----
-  document.querySelectorAll('.seg').forEach(el => {
+  // 注意只选 .seg[data-mode]：创建表单里的权限按钮也是 .seg（没有 data-mode），
+  // 之前这里一刀切会把权限按钮的选中态一起清掉/改掉
+  document.querySelectorAll('.seg[data-mode]').forEach(el => {
     el.onclick = () => {
       if (tState !== 'idle') return;
+      if (!canOpTimer()) return;
       tMode = el.dataset.mode;
-      document.querySelectorAll('.seg').forEach(s => s.classList.toggle('on', s === el));
+      document.querySelectorAll('.seg[data-mode]').forEach(s => s.classList.toggle('on', s === el));
       $t('cfgNormal').style.display = tMode === 'normal' ? 'block' : 'none';
       $t('cfgRelay').style.display = tMode === 'relay' ? 'block' : 'none';
       if (tMode === 'relay') updateRelayHint();
+      pushTimerSoon();
     };
   });
 
   // ---- 生成阶段序列 ----
   function buildPhases() {
     if (tMode === 'normal') {
+      // 普通模式只按轮数计时，不绑定具体玩法（画/猜、发言、抢答都能用），所以不带玩法标签
       phases = Array.from({ length: cfg.rounds }, (_, i) => ({
-        title: '第 ' + (i + 1) + ' 轮', tag: '画 & 猜', dur: cfg.roundSec
+        title: '第 ' + (i + 1) + ' 轮', tag: '', dur: cfg.roundSec
       }));
     } else {
       phases = [];
@@ -1063,7 +1614,9 @@
   function renderPhase() {
     renderDots();
     const p = phases[pi];
-    const label = p.title + ' · ' + tagIcon[p.tag] + ' ' + p.tag;
+    if (!p) { $t('phaseTitle').textContent = ''; $t('fsPhase').textContent = ''; return; }
+    // 没有玩法标签的阶段（普通模式）只显示标题
+    const label = p.tag ? p.title + ' · ' + tagIcon[p.tag] + ' ' + p.tag : p.title;
     $t('phaseTitle').textContent = label;
     $t('fsPhase').textContent = label;
   }
@@ -1090,7 +1643,9 @@
       $t('timerFull').style.display = 'none';
       $t('runArea').style.display = 'none';
       $t('cfgCommon').style.display = 'block';
-      $t(tMode === 'normal' ? 'cfgNormal' : 'cfgRelay').style.display = 'block';
+      // 两个模式面板必须互斥显示：只设当前的不够，另一个可能残留（比如在房间里跟随过接龙模式，退出后回到这里）
+      $t('cfgNormal').style.display = tMode === 'normal' ? 'block' : 'none';
+      $t('cfgRelay').style.display = tMode === 'relay' ? 'block' : 'none';
       document.querySelector('.mode-tabs').style.display = 'flex';
       closeFs();
       releaseWake();
@@ -1111,10 +1666,7 @@
       if (s === 'done') releaseWake(); else requestWake();
     }
     // 全屏层按钮同步
-    $t('fsMain').textContent = s === 'running' ? '暂停'
-      : s === 'paused' ? '继续'
-      : s === 'between' ? ((pi < phases.length - 1) ? '下一阶段 ▶' : '查看结果 ▶')
-      : '再来一局';
+    $t('fsMain').textContent = canOpTimer() ? fsMainLabel() : '🔒 仅房主可操作';
     $t('fsSkip').style.display = (s === 'running' || s === 'paused') ? 'block' : 'none';
     updateMini();
   }
@@ -1157,6 +1709,29 @@
       else releaseWake();
     };
   });
+
+  // ---- 提示音范围（仅房间内 + 计时权限=仅房主时显示）----
+  // 房主决定倒计时提示音和结束音是只有自己的设备响，还是所有设备都响。
+  // 跟随者侧在 followTick 里按 cfg.sndAll 判断；sndAll 随计时快照一起同步。
+  document.querySelectorAll('#sndSeg .preset').forEach(chip => {
+    chip.onclick = () => {
+      if (!canOpTimer() || tState !== 'idle') return;
+      cfg.sndAll = chip.dataset.snd === '1';
+      document.querySelectorAll('#sndSeg .preset').forEach(x => x.classList.toggle('on', x === chip));
+      pushTimerSoon();
+    };
+  });
+  function syncSndSeg() {
+    document.querySelectorAll('#sndSeg .preset').forEach(x =>
+      x.classList.toggle('on', (x.dataset.snd === '1') === !!cfg.sndAll));
+  }
+  function updateSndRow() {
+    // 这是房主的设置项：只有「房间内 + 计时权限=仅房主 + 自己是房主」才显示
+    const show = window.GPRoom && GPRoom.inRoom && GPRoom.perm
+      && GPRoom.perm.timer === 'host' && GPRoom.isHost;
+    $t('sndRow').style.display = show ? 'flex' : 'none';
+    if (show) syncSndSeg();
+  }
   if (!('wakeLock' in navigator)) {
     $t('wlHint').textContent = '当前浏览器不支持屏幕常亮（iPhone 需 iOS 16.4+，或改用 Chrome / Edge）。';
   }
@@ -1178,10 +1753,29 @@
   }
 
   // ---- 悬浮计时条 ----
+  // 当前设备能不能操作计时器：房间里把权限设成「仅房主」时，非房主只能看
+  function canOpTimer() {
+    return !(window.GPRoom && GPRoom.inRoom && GPRoom.perm
+      && GPRoom.perm.timer === 'host' && !GPRoom.isHost);
+  }
+
+  // 全屏层主按钮的文案（只读时统一显示为「仅房主可操作」）
+  function fsMainLabel() {
+    return tState === 'running' ? '暂停'
+      : tState === 'paused' ? '继续'
+      : tState === 'between' ? ((pi < phases.length - 1) ? '下一阶段 ▶' : '查看结果 ▶')
+      : '再来一局';
+  }
+
   function updateMini() {
     const show = tState !== 'idle' && curSection !== 'timer' && !fsOn;
     $t('miniTimer').classList.toggle('on', show);
     document.body.classList.toggle('mini-open', show);
+    // 只读时把「暂停/继续」换成「查看 ›」：点条子只是跳到计时器页面，不代表能控制
+    const canOp = canOpTimer();
+    $t('mtToggle').style.display = canOp ? 'block' : 'none';
+    $t('mtView').style.display = canOp ? 'none' : 'inline';
+    $t('fsMain').textContent = canOp ? fsMainLabel() : '🔒 仅房主可操作';
     if (!show) return;
     const p = phases[pi];
     $t('mtPhase').textContent = tState === 'between' ? '⏰ 时间到' : (p ? p.title : '计时中');
@@ -1201,6 +1795,13 @@
     if (AC && AC.state === 'suspended') AC.resume();
     primeSpeech();
   }
+  // 手机浏览器要求「先有过用户手势」才允许页面发声。仅房主权限下，跟随者从不点
+  // 计时按钮（那些按钮都锁了），之前 ensureAudio 只挂在计时按钮上 → 音频上下文
+  // 从未创建 → 倒数提示音和结束音全都没有。改成页面上的任意一次触摸/点击都
+  // 顺手解锁（幂等，开销可忽略），跟随者照样有声音。
+  ['pointerdown', 'touchstart', 'mousedown', 'keydown'].forEach(ev =>
+    document.addEventListener(ev, ensureAudio, { capture: true, passive: true }));
+
   function beep(freq, dur) {
     if (!AC) return;
     const o = AC.createOscillator(), g = AC.createGain();
@@ -1270,7 +1871,11 @@
     if (tState !== 'running') return;
     remainMs -= (ts - lastTs);
     lastTs = ts;
-    if (remainMs <= 0) { remainMs = 0; renderTime(); timeUp(); return; }
+    if (remainMs <= 0) {
+      remainMs = 0; renderTime(); timeUp();
+      pushTimerSoon();   // 自然到期也要推给服务端：不然快照停在「运行中」，新加入的人会立刻看到一次假的「时间到」
+      return;
+    }
     // 倒数提示：剩 N 秒时响一声蜂鸣
     const sec = Math.ceil(remainMs / 1000);
     if (!alertFired && cfg.alertSec > 0 && sec === cfg.alertSec) {
@@ -1281,14 +1886,17 @@
     rafId = requestAnimationFrame(tick);
   }
 
-  function timeUp() {
+  function timeUp(quiet) {
     // 结束音（三连蜂鸣）+ 闪屏，随后语音播报「时间到」
-    beep(880, .15);
-    setTimeout(() => beep(880, .15), 220);
-    setTimeout(() => beep(1200, .45), 440);
+    // quiet=true：只做视觉提示不发声 —— 跟随者在房主没开放「提示音：所有人」时用
+    if (!quiet) {
+      beep(880, .15);
+      setTimeout(() => beep(880, .15), 220);
+      setTimeout(() => beep(1200, .45), 440);
+      // 「时间到」优先级最高：掐掉未说完的倒数播报，必完整播出
+      setTimeout(() => speak('时间到', true), 780);
+    }
     flash();
-    // 「时间到」优先级最高：掐掉未说完的倒数播报，必完整播出
-    setTimeout(() => speak('时间到', true), 780);
     $t('phaseTitle').textContent = '⏰ 时间到！';
     $t('fsPhase').textContent = '⏰ 时间到！';
     setState('between');
@@ -1308,6 +1916,7 @@
 
   // ---- 按钮 ----
   function onMain() {
+    if (!canOpTimer()) return;   // 仅房主可操作：其他设备点了也不生效（服务端同样会拒绝）
     if (tState === 'idle') {
       gen++;
       syncInputs();              // 以输入框里显示的数字为准，避免用到旧配置
@@ -1329,15 +1938,18 @@
       gen++;
       pi = 0; startPhase();
     }
+    pushTimerSoon();
   }
 
   function onSkip() {
+    if (!canOpTimer()) return;
     if (tState !== 'running' && tState !== 'paused') return;
     gen++;
     cancelSpeech();
     cancelAnimationFrame(rafId);
     if (pi < phases.length - 1) { pi++; startPhase(); }
     else finish();
+    pushTimerSoon();
   }
 
   $t('timerMain').onclick = () => { ensureAudio(); onMain(); };
@@ -1358,7 +1970,136 @@
     cancelAnimationFrame(rafId);
     setState('idle');
     if (tMode === 'relay') updateRelayHint();
+    pushTimerSoon();
   };
+
+  // ===== 房间共享计时器 =====
+  // 房间里所有设备看的是同一个计时器：任何操作（开始/暂停/跳过/重置/改配置）
+  // 都把本机引擎快照推到服务端，其他人按快照 + 服务器时钟渲染自己的界面。
+  // 仅房主权限时服务端会拒绝非房主的推送，本机按钮也早已被禁用（ro-timer）。
+  let tFollowing = false;        // true = 正在跟随别人的计时器（本地变化不回推）
+  let tPushT = null;             // 推送防抖
+  let tFollowRaf = null;
+  let tFollowEndTs = 0;
+  let tApplyingRemote = false;
+
+  function timerSnapshot() {
+    return {
+      mode: tMode,
+      cfg: Object.assign({}, cfg),
+      phases: phases,
+      pi: pi,
+      state: tState,
+      endTs: tState === 'running' ? Date.now() + Math.max(0, Math.round(remainMs)) : 0,
+      remainMs: tState === 'paused' ? Math.max(0, Math.round(remainMs)) : 0
+    };
+  }
+
+  function pushTimerSoon() {
+    if (!window.GPRoom || !GPRoom.inRoom || tApplyingRemote) return;
+    tFollowing = false;          // 本机主动操作 = 从跟随者变回操作者
+    clearTimeout(tPushT);
+    tPushT = setTimeout(() => {
+      if (!window.GPRoom || !GPRoom.inRoom || tApplyingRemote || tFollowing) return;
+      GPRoom.pushTimer(timerSnapshot()).catch(() => { });
+    }, 150);
+  }
+
+  // 跟随者的倒计时：不用本地累减，直接用「结束时间戳 - 对时后的现在」算，多端误差最小
+  function followTick() {
+    if (!tFollowing || tState !== 'running') { tFollowRaf = null; return; }
+    remainMs = tFollowEndTs - (Date.now() + (window.GPRoom ? GPRoom.clockOffset : 0));
+    if (remainMs <= 0) {
+      remainMs = 0;
+      renderTime();
+      // 房主没开「提示音：所有人」时，跟随者只闪屏不发声（快照里带 sndAll）
+      timeUp(!cfg.sndAll);
+      tFollowRaf = null;
+      return;
+    }
+    const sec = Math.ceil(remainMs / 1000);
+    if (!alertFired && cfg.sndAll && cfg.alertSec > 0 && sec === cfg.alertSec) {
+      alertFired = true;
+      beep(1046, .28);
+    }
+    renderTime();
+    tFollowRaf = requestAnimationFrame(followTick);
+  }
+
+  // 应用别人的计时器快照：完全照抄对方的引擎状态（配置 / 阶段 / 进度）
+  function applyRemoteTimer(snap) {
+    if (!snap || tApplyingRemote) return;
+    tFollowing = true;
+    tApplyingRemote = true;
+    try {
+      gen++;
+      cancelSpeech();
+      cancelAnimationFrame(rafId);
+      cancelAnimationFrame(tFollowRaf);
+      tFollowRaf = null;
+      tMode = snap.mode === 'relay' ? 'relay' : 'normal';
+      Object.assign(cfg, snap.cfg || {});
+      phases = Array.isArray(snap.phases) ? snap.phases : [];
+      pi = Math.max(0, Math.min(Math.max(0, phases.length - 1), Number(snap.pi) || 0));
+      // 配置区 UI 同步（跟随者看到的就是操作者设的参数）
+      Object.keys(inputRange).forEach(k => setVal(k));
+      refreshPresets();
+      if (typeof syncSndSeg === 'function') syncSndSeg();
+      document.querySelectorAll('.seg[data-mode]').forEach(s => s.classList.toggle('on', s.dataset.mode === tMode));
+      alertFired = false;
+      const st = snap.state || 'idle';
+      if (st === 'running') {
+        tFollowEndTs = Number(snap.endTs) || Date.now();
+        remainMs = Math.max(0, tFollowEndTs - (Date.now() + (window.GPRoom ? GPRoom.clockOffset : 0)));
+        renderPhase();
+        renderTime();
+        if (remainMs <= 0) {
+          // 过期的运行快照（比如房主的计时器自然到期后还没来得及推新状态）：
+          // 静默进入「时间到」界面，绝不触发红光和结束音 —— 否则刚加入房间就会响一次
+          setState('between');
+          $t('phaseTitle').textContent = '⏰ 时间到！';
+          $t('fsPhase').textContent = '⏰ 时间到！';
+        } else {
+          setState('running');
+          tFollowRaf = requestAnimationFrame(followTick);
+        }
+      } else if (st === 'paused') {
+        remainMs = Number(snap.remainMs) || 0;
+        renderPhase();
+        renderTime();
+        setState('paused');
+      } else if (st === 'between') {
+        remainMs = 0;
+        renderPhase();
+        renderTime();
+        setState('between');
+        $t('phaseTitle').textContent = '⏰ 时间到！';
+        $t('fsPhase').textContent = '⏰ 时间到！';
+      } else if (st === 'done') {
+        setState('done');
+        $t('phaseTitle').textContent = '🎉 游戏结束！';
+        $t('fsPhase').textContent = '🎉 游戏结束！';
+        $t('timerDisplay').textContent = '00:00.00';
+        $t('timerDisplay').classList.remove('urgent');
+        $t('fsTime').textContent = '00:00';
+        $t('fsTime').classList.remove('urgent');
+        updateMini();
+      } else {
+        setState('idle');
+        if (tMode === 'relay') updateRelayHint();
+      }
+    } finally {
+      tApplyingRemote = false;
+    }
+  }
+
+  // 离开房间后停止跟随，回到纯本机计时
+  function timerFollowOff() {
+    if (!tFollowing) return;
+    tFollowing = false;
+    cancelAnimationFrame(tFollowRaf);
+    tFollowRaf = null;
+  }
 
   // ---- 根据已恢复的配置同步预设按钮高亮 ----
   function refreshPresets() {
@@ -1399,7 +2140,8 @@
   let sortMode = 'lock';
   let spPending = null;        // { idx, sign } 就地输入本次加减分
   let spOpenIdx = null;        // 左滑展开删除按钮的玩家下标
-  let history = [], hIndex = -1;   // 撤销 / 前进
+  let history = [], hIndex = -1;   // 撤销 / 前进（房间里改由服务端维护，本地这份是空的）
+  let lastSync = null;             // 上一次真正写给服务端的快照，用来识别“只是翻回合看分”
 
   const DEL_W = 76;            // 删除按钮宽度
 
@@ -1411,7 +2153,13 @@
     const delBtn = document.createElement('button');
     delBtn.className = 'swipe-del'; delBtn.textContent = '删除';
     delBtn.title = '移除该玩家';
-    delBtn.onclick = () => { players.splice(idx, 1); spOpenIdx = null; spPending = null; renderPlayers(); recordState(); };
+    delBtn.onclick = () => {
+      if (!canOpScore()) return;
+      players.splice(idx, 1); spOpenIdx = null; spPending = null; renderPlayers(); recordState();
+    };
+
+    // 没有改分权限：不挂滑动手势，红按钮永远露不出来
+    if (!canOpScore()) { item.appendChild(delBtn); item.appendChild(row); return item; }
 
     // 初始位置：该行处于展开态则停在左侧
     const baseX = (spOpenIdx === idx) ? -DEL_W : 0;
@@ -1507,10 +2255,16 @@
   // ---- 撤销 / 前进 ----
   function snapshot() {
     return JSON.stringify({
-      players: players.map(p => ({ name: p.name, scores: p.scores.slice(), color: p.color, pos: p.pos })),
+      players: players.map(p => ({ id: p.id, name: p.name, scores: p.scores.slice(), color: p.color, pos: p.pos })),
       roundCount, curRound
     });
   }
+  function stripCurRound(s) {
+    const d = JSON.parse(s);
+    delete d.curRound;
+    return JSON.stringify(d);
+  }
+
   function recordState() {
     const s = snapshot();
     if (hIndex >= 0 && history[hIndex] === s) return;
@@ -1519,6 +2273,15 @@
     if (history.length > 100) history.shift();
     hIndex = history.length - 1;
     updateUndoBtns();
+    // 房间模式：本地改动同步给其他设备（撤销栈由服务端维护）。
+    // 但如果这次只是翻回合看分（除了 curRound 什么都没变），就留在本机，不去动别人的屏幕。
+    // 注意比对的是「上次同步过的那份」而不是本地撤销栈：房间里本地撤销栈是空的，
+    // 拿它当基准会把每一次翻回合都当成新改动推上去。
+    const onlyViewTurn = lastSync && stripCurRound(lastSync) === stripCurRound(s);
+    if (roomActive() && !applyingRemote && !onlyViewTurn) {
+      lastSync = s;
+      GPRoom.pushState(JSON.parse(s));
+    }
   }
   function restoreState(s) {
     const d = JSON.parse(s);
@@ -1529,6 +2292,12 @@
     renderPlayers();
   }
   function updateUndoBtns() {
+    if (roomActive() && window.GPRoom) {
+      // 房间里撤销栈在服务端，所有人看到同一份历史
+      $t('spUndo').disabled = !GPRoom.canUndo;
+      $t('spRedo').disabled = !GPRoom.canRedo;
+      return;
+    }
     $t('spUndo').disabled = hIndex <= 0;
     $t('spRedo').disabled = hIndex >= history.length - 1;
   }
@@ -1541,14 +2310,19 @@
     for (let c = 0; c < PALETTE_N; c++) if (!used.has(c)) return c;
     return players.length % PALETTE_N;
   }
-  // 老数据、撤销恢复的分支可能缺 color/pos，补齐后再渲染
+  // 老数据、撤销恢复的分支可能缺 color/pos/id，补齐后再渲染
   function ensureMeta() {
     let maxPos = -1;
     players.forEach(p => { if (typeof p.pos === 'number') maxPos = Math.max(maxPos, p.pos); });
     players.forEach(p => {
+      if (!p.id) p.id = genPid();
       if (typeof p.color !== 'number') p.color = nextColor();
       if (typeof p.pos !== 'number') p.pos = ++maxPos;
     });
+  }
+  // 玩家 id：跨设备合并时用它认人，不能依赖数组下标
+  function genPid() {
+    return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   }
 
   function renderPlayers() {
@@ -1580,6 +2354,12 @@
       const rank = rankOf.get(p) - 1;
       const row = document.createElement('div');
       row.className = 'score-row pc-' + (p.color % PALETTE_N);
+      // 房间成员对应的行：人已离开或掉线时整行置灰（分数保留）
+      if (p.id && p.id.indexOf('u:') === 0 && window.GPRoom && GPRoom.inRoom) {
+        const mid = p.id.slice(2);
+        const m = (GPRoom.members || []).find(x => x.id === mid);
+        if (!m || !m.online) row.classList.add('away');
+      }
       row.dataset.pi = i;
 
       const rk = document.createElement('span');
@@ -1674,8 +2454,15 @@
     });
   }
 
+  // 本机能不能改分：房间里计分权限设成「仅房主」且自己不是房主时，只能看
+  function canOpScore() {
+    return !(window.GPRoom && GPRoom.inRoom && GPRoom.perm
+      && GPRoom.perm.score === 'host' && !GPRoom.isHost);
+  }
+
   // 点 − / ＋：有步长则直接加减，否则该行进入就地输入模式
   function quickAdjust(idx, sign) {
+    if (!canOpScore()) return;
     spOpenIdx = null;
     if (scoreStep === null) {
       spPending = { idx, sign };
@@ -1702,6 +2489,7 @@
 
   // 点击分数：就地变成输入框，可输入任意整数（含负数，仅本回合）
   function startEditScore(row, idx) {
+    if (!canOpScore()) return;
     const old = row.querySelector('.pscore');
     const input = document.createElement('input');
     input.type = 'text';
@@ -1730,6 +2518,7 @@
 
   // ---- 添加玩家 ----
   $t('spAdd').onclick = () => {
+    if (!canOpScore()) return;
     const nameEl = $t('spName'), initEl = $t('spInit');
     let name = nameEl.value.trim();
     if (!name) name = '玩家' + (players.length + 1);
@@ -1738,7 +2527,7 @@
     arr[curRound] = score;             // 初始分数记在当前回合
     // 颜色取当前没被占用的；位次排在最后，切「位置固定」时按添加顺序显示
     const maxPos = players.reduce((m, p) => Math.max(m, typeof p.pos === 'number' ? p.pos : -1), -1);
-    players.push({ name, scores: arr, color: nextColor(), pos: maxPos + 1 });
+    players.push({ id: genPid(), name, scores: arr, color: nextColor(), pos: maxPos + 1 });
     nameEl.value = '';
     initEl.value = '0';
     spOpenIdx = null;
@@ -1779,12 +2568,14 @@
 
   // ---- 本回合清零 / 清空玩家 ----
   $t('spZero').onclick = () => {
+    if (!canOpScore()) return;
     spOpenIdx = null;
     players.forEach(p => { p.scores[curRound] = 0; });
     renderPlayers();
     recordState();
   };
   $t('spClear').onclick = () => {
+    if (!canOpScore()) return;
     players = [];
     roundCount = 1;
     curRound = 0;
@@ -1798,12 +2589,16 @@
 
   // ---- 撤销 / 前进 ----
   $t('spUndo').onclick = () => {
+    if (!canOpScore()) return;
+    if (roomActive()) { GPRoom.undo(); return; }
     if (hIndex <= 0) return;
     hIndex--;
     restoreState(history[hIndex]);
     updateUndoBtns();
   };
   $t('spRedo').onclick = () => {
+    if (!canOpScore()) return;
+    if (roomActive()) { GPRoom.redo(); return; }
     if (hIndex >= history.length - 1) return;
     hIndex++;
     restoreState(history[hIndex]);
@@ -1815,13 +2610,16 @@
     if (curRound <= 0) return;
     curRound--; spPending = null; spOpenIdx = null;
     renderPlayers();
+    recordState();
   };
   $t('rNext').onclick = () => {
     if (curRound >= roundCount - 1) return;
     curRound++; spPending = null; spOpenIdx = null;
     renderPlayers();
+    recordState();
   };
   $t('rAdd').onclick = () => {
+    if (!canOpScore()) return;      // 加回合是改数据，只有能改分的人才行
     roundCount++;
     curRound = roundCount - 1;
     spPending = null; spOpenIdx = null;
@@ -1829,7 +2627,7 @@
     recordState();
   };
   $t('rDel').onclick = () => {
-    if (roundCount <= 1) return;
+    if (!canOpScore() || roundCount <= 1) return;
     players.forEach(p => p.scores.splice(curRound, 1));
     roundCount--;
     curRound = Math.min(curRound, roundCount - 1);
@@ -1855,6 +2653,458 @@
     wrap.classList.toggle('open', open);
     $t('spHintBtn').setAttribute('aria-expanded', open ? 'true' : 'false');
   };
+
+  // ===== 多人房间（试水版：只共享计分板）=====
+  let applyingRemote = false;      // 正在应用远端状态，避免把远端状态又推回服务端
+  let pendingRoomState = null;     // 用户正在输入时先存着，失焦后再渲染
+
+  function roomActive() { return !!(window.GPRoom && GPRoom.inRoom); }
+  function roomHasLocalPlayers() { return players.length > 0; }
+
+  // 远端状态 → 本机计分板
+  function applyRoomState(st) {
+    applyingRemote = true;
+    players = (st.players || []).map(p => ({
+      id: p.id,
+      name: p.name,
+      scores: (p.scores || []).slice(),
+      color: p.color,
+      pos: p.pos
+    }));
+    const rc = Math.max(1, st.roundCount || 1);
+    const roundsChanged = rc !== roundCount;      // 房主新增/删除回合时，跟着切过去
+    roundCount = rc;
+    // 「现在看第几回合」是每个人自己的事（纯查看），别人翻回合不会拽走你的视线；
+    // 只有回合总数变了才跟随服务端，免得新加的回合没人看得到。
+    curRound = roundsChanged
+      ? Math.min(st.curRound || 0, roundCount - 1)
+      : Math.min(curRound, roundCount - 1);
+    spPending = null; spOpenIdx = null;
+    history = []; hIndex = -1;     // 房间里撤销栈在服务端
+    try { renderPlayers(); } finally { applyingRemote = false; }
+    lastSync = snapshot();         // 基准：别人同步过来的那份，之后只有真正改分才反推
+    updateUndoBtns();
+  }
+
+  // 用户正在改分数时不打断输入
+  function roomEditing() {
+    const ae = document.activeElement;
+    return !!(spPending || (ae && $t('spList') && $t('spList').contains(ae)));
+  }
+
+  if (window.GPRoom) {
+    window.GPRoomBridge = {
+      getState: () => JSON.parse(snapshot()),
+      applyState: st => {
+        if (roomEditing()) { pendingRoomState = st; return; }
+        applyRoomState(st);
+      }
+    };
+
+    document.addEventListener('focusout', () => {
+      if (!pendingRoomState) return;
+      setTimeout(() => {
+        if (roomEditing()) return;
+        const st = pendingRoomState;
+        pendingRoomState = null;
+        applyRoomState(st);
+      }, 0);
+    });
+
+    // 复制：非 https 环境（手机通过内网 IP 访问）没有 navigator.clipboard，用旧办法兜底
+    function copyText(text) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        if (ok) return true;
+      } catch (e) { }
+      return false;
+    }
+
+    // ================= 主页 =================
+    const homeErr = $t('homeErr'), joinErr = $t('joinErr');
+    function showErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
+    function hideErr() { homeErr.style.display = 'none'; joinErr.style.display = 'none'; }
+
+    function homeShow(which) {
+      $t('homeMenu').style.display = which === 'menu' ? 'flex' : 'none';
+      $t('createForm').style.display = which === 'create' ? 'block' : 'none';
+      $t('joinForm').style.display = which === 'join' ? 'block' : 'none';
+      if (which === 'create') {
+        // 每次打开创建表单，权限三个开关都回到默认「所有人」，不带上一次建房的旧选择
+        document.querySelectorAll('.perm-row').forEach(row =>
+          row.querySelectorAll('.seg-sm').forEach(x =>
+            x.classList.toggle('on', x.dataset.v === 'all')));
+      }
+      hideErr();
+    }
+    function enterApp(toScore) {
+      document.body.classList.remove('at-home');
+      if (toScore) {
+        const tab = [...document.querySelectorAll('.main-tab')].find(t => t.dataset.sec === 'score');
+        if (tab) tab.click();
+      }
+    }
+    // 返回主页：保留房间连接（分数继续在后台同步），主页会显示“房间进行中”卡片
+    function goHome() {
+      document.body.classList.add('at-home');
+      homeShow('menu');
+      renderHomeRoom();
+    }
+    function renderHomeRoom() {
+      const card = $t('homeRoomCard');
+      if (GPRoom.inRoom) {
+        card.style.display = 'block';
+        $t('homeRoomCode').textContent = GPRoom.code || '------';
+        $t('homeRoomName').textContent = GPRoom.roomName || '未命名房间';
+      } else {
+        card.style.display = 'none';
+      }
+    }
+    $t('btnBackRoom').onclick = () => enterApp(true);
+    // 主页的「退出房间」同样要确认：确认期间藏掉两个按钮，取消则恢复
+    $t('btnLeaveFromHome').onclick = () => {
+      $t('homeAsk').style.display = 'flex';
+      $t('homeRoomBtns').style.display = 'none';
+    };
+    $t('homeAskNo').onclick = () => {
+      $t('homeAsk').style.display = 'none';
+      $t('homeRoomBtns').style.display = 'flex';
+    };
+    $t('homeAskYes').onclick = () => {
+      GPRoom.leave();
+      renderHomeRoom();
+      toast('已退出房间，当前为离线模式', 3000);
+    };
+    $t('btnHome').onclick = goHome;
+
+    const savedNick = GPRoom.myName || '';
+    $t('fHostName').value = savedNick;
+    $t('fJoinName').value = savedNick;
+
+    $t('btnGoCreate').onclick = () => homeShow('create');
+    $t('btnGoJoin').onclick = () => homeShow('join');
+    $t('btnGoOffline').onclick = () => enterApp(false);
+    $t('btnCreateBack').onclick = () => homeShow('menu');
+    $t('btnJoinBack').onclick = () => homeShow('menu');
+
+    // 操作权限：每个功能区「所有人可操作 / 仅房主操作」
+    document.querySelectorAll('.perm-row .seg-sm').forEach(seg => {
+      seg.onclick = () => {
+        seg.parentElement.querySelectorAll('.seg-sm').forEach(x => x.classList.toggle('on', x === seg));
+      };
+    });
+    function readPerm() {
+      const perm = { draw: 'all', timer: 'all', score: 'all' };
+      document.querySelectorAll('.perm-row').forEach(row => {
+        const on = row.querySelector('.seg-sm.on');
+        perm[row.dataset.area] = on && on.dataset.v === 'host' ? 'host' : 'all';
+      });
+      return perm;
+    }
+
+    // 最大人数步进（2–20）
+    function stepMax(d) {
+      const el = $t('fMaxPlayers');
+      let v = parseInt(el.value, 10);
+      if (!Number.isFinite(v)) v = 8;
+      v = Math.max(2, Math.min(20, v + d));
+      el.value = v;
+    }
+    $t('mpMinus').onclick = () => stepMax(-1);
+    $t('mpPlus').onclick = () => stepMax(1);
+    $t('fMaxPlayers').addEventListener('input', e => {
+      e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 2);
+    });
+    $t('fMaxPlayers').addEventListener('blur', e => {
+      let v = parseInt(e.target.value, 10);
+      if (!Number.isFinite(v)) v = 8;
+      e.target.value = Math.max(2, Math.min(20, v));
+    });
+
+    $t('fJoinCode').addEventListener('input', e => {
+      e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    });
+    $t('fJoinCode').addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); $t('btnJoinOk').click(); }
+    });
+
+    // 服务不可用时的兜底：点按钮先重试一次探测
+    async function ensureService() {
+      if (GPRoom.available) return true;
+      await GPRoom.init();
+      if (GPRoom.available) return true;
+      return false;
+    }
+    const NO_SERVICE_MSG = '没连上房间服务：请确认电脑上已运行 node server.js，'
+      + '并用 http://电脑IP:8500/ 打开本页（当前 ' + location.origin + '）。';
+
+    $t('btnCreateOk').onclick = async () => {
+      const btn = $t('btnCreateOk');
+      if (GPRoom.inRoom) {
+        showErr(homeErr, '你已在房间 ' + GPRoom.code + ' 中，想开新房间请先点上方「退出房间」。');
+        return;
+      }
+      const name = ($t('fRoomName').value || '').trim() || '桌游房间';
+      let mp = parseInt($t('fMaxPlayers').value, 10);
+      if (!Number.isFinite(mp)) mp = 8;
+      const nick = ($t('fHostName').value || '').trim();
+      if (!nick) { showErr(homeErr, '先给自己起个昵称吧。'); return; }
+      hideErr();
+      btn.disabled = true;
+      try {
+        if (!(await ensureService())) { showErr(homeErr, NO_SERVICE_MSG); return; }
+        await GPRoom.create({ name: name, maxPlayers: mp, hostName: nick, perm: readPerm() });
+        enterApp(true);
+      } catch (e) {
+        showErr(homeErr, '创建房间失败：' + (e.message === 'bad_response'
+          ? '这个地址没有房间接口（可能打开的是静态版页面）。'
+          : (e.message || '服务不可用')));
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    $t('btnJoinOk').onclick = async () => {
+      const btn = $t('btnJoinOk');
+      if (GPRoom.inRoom) {
+        showErr(joinErr, '你已在房间 ' + GPRoom.code + ' 中，想换房间请先点上方「退出房间」。');
+        return;
+      }
+      const code = ($t('fJoinCode').value || '').trim().toUpperCase();
+      const nick = ($t('fJoinName').value || '').trim();
+      if (!code) { showErr(joinErr, '请先输入房间码。'); return; }
+      if (!nick) { showErr(joinErr, '先给自己起个昵称吧。'); return; }
+      hideErr();
+      btn.disabled = true;
+      try {
+        if (!(await ensureService())) { showErr(joinErr, NO_SERVICE_MSG); return; }
+        try { await GPRoom.peek(code); } catch (e) {
+          showErr(joinErr, e.message === 'room_not_found' ? '没有找到这个房间，请核对房间码。'
+            : (e.message === 'room_full' ? '房间已满（上限 ' + (e.maxPlayers || '?') + ' 人），让房主调大最大人数或等人退出再试。'
+              : NO_SERVICE_MSG));
+          return;
+        }
+        await GPRoom.join(code, { name: nick });
+        $t('fJoinCode').value = '';
+        enterApp(true);
+      } catch (e) {
+        showErr(joinErr, e.message === 'room_full'
+          ? '房间已满（上限 ' + (e.maxPlayers || '?') + ' 人），让房主调大最大人数或等人退出再试。'
+          : (e.message === 'bad_code' ? '房间码是 4–8 位字母或数字，请再核对一下。'
+            : (e.message === 'bad_response' ? '这个地址没有房间接口，请用 node server.js 启动后再打开。'
+              : '加入失败：' + (e.message || '服务不可用'))));
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    // ================= 房间角标 + 成员弹层 =================
+    function renderChip(d) {
+      const chip = $t('roomChip');
+      // body.chip-on：顶栏据此下移，避免被右上角的角标压住标题
+      document.body.classList.toggle('chip-on', !!d.inRoom);
+      if (!d.inRoom) {
+        chip.style.display = 'none';
+        $t('roomPopWrap').classList.remove('on');
+        return;
+      }
+      chip.style.display = 'flex';
+      $t('chipRoom').textContent = d.roomName || '房间';
+      $t('chipMe').textContent = d.myName || '我';
+    }
+
+    function renderPop() {
+      if (!roomActive()) return;
+      $t('popRoomName').textContent = GPRoom.roomName || '房间';
+      $t('popCode').textContent = GPRoom.code || '';
+      const ms = GPRoom.members || [];
+      $t('popCount').textContent = ms.length + ' 人' + (GPRoom.maxPlayers ? ' / 上限 ' + GPRoom.maxPlayers : '');
+      const box = $t('popMembers');
+      box.innerHTML = '';
+      ms.forEach(m => {
+        const row = document.createElement('div');
+        row.className = 'pm-row' + (m.online ? '' : ' away');
+        const dot = document.createElement('span');
+        dot.className = 'pm-dot';
+        const name = document.createElement('span');
+        name.className = 'pm-name';
+        name.textContent = m.name;
+        row.appendChild(dot);
+        row.appendChild(name);
+        if (m.host) {
+          const tag = document.createElement('span');
+          tag.className = 'pm-tag';
+          tag.textContent = '房主';
+          row.appendChild(tag);
+        }
+        if (m.id === GPRoom.me) {
+          const tag = document.createElement('span');
+          tag.className = 'pm-tag me';
+          tag.textContent = '我';
+          row.appendChild(tag);
+        }
+        box.appendChild(row);
+      });
+    }
+
+    function closePop() {
+      $t('roomPopWrap').classList.remove('on');
+      $t('popAsk').style.display = 'none';
+      $t('popActions').style.display = 'flex';   // 确认条收起时按钮行复原
+    }
+    $t('roomChip').onclick = () => {
+      renderPop();
+      $t('roomPopWrap').classList.add('on');
+    };
+    $t('roomPopWrap').onclick = e => {
+      if (e.target === $t('roomPopWrap')) closePop();
+    };
+    $t('popClose').onclick = closePop;
+
+    // 离开房间：内联确认（不用系统 confirm，嵌入环境会被拦）。
+    // 确认期间把下面三个按钮藏起来，只留「取消 / 确认离开」，避免界面混淆。
+    $t('popLeave').onclick = () => {
+      $t('popAsk').style.display = 'flex';
+      $t('popActions').style.display = 'none';
+    };
+    $t('popAskNo').onclick = () => {
+      $t('popAsk').style.display = 'none';
+      $t('popActions').style.display = 'flex';   // 取消 → 回到原来的三个按钮
+    };
+    $t('popAskYes').onclick = () => {
+      GPRoom.leave();
+      closePop();
+      goHome();          // 退出房间后回到主页，而不是留在已经单机的应用里
+      toast('已退出房间，当前为离线模式', 3000);
+    };
+
+    $t('popCopy').onclick = async () => {
+      const code = GPRoom.code || '';
+      // 只复制房间码本身（6 位），方便直接粘到聊天框发出去
+      const text = code;
+      let done = false;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+          done = true;
+        }
+      } catch (e) { done = false; }
+      if (!done) done = copyText(text);
+      if (done) {
+        $t('popCopy').textContent = '已复制 ✓';
+        setTimeout(() => { $t('popCopy').textContent = '复制房间码'; }, 1600);
+      } else {
+        $t('popCode').textContent = code;
+      }
+    };
+
+    // ================= 成员自动进计分板 =================
+    // 每个成员对应一个固定 id 的玩家行（u:成员id）：
+    // - 加入的人自动出现在计分板里
+    // - 改昵称会同步到那一行
+    // - 离开的人分数保留（分数是游戏记录，不能跟着人消失），行会置灰，可手动左滑删除
+    function ensureMemberPlayers() {
+      if (!roomActive() || applyingRemote) return;
+      const ms = GPRoom.members || [];
+      if (!ms.length) return;
+      let changed = false;
+      ms.forEach(m => {
+        const pid = 'u:' + m.id;
+        const p = players.find(x => x.id === pid);
+        if (!p) {
+          players.push({ id: pid, name: m.name, scores: [] });
+          changed = true;
+        } else if (p.name !== m.name) {
+          p.name = m.name;
+          changed = true;
+        }
+      });
+      if (changed) {
+        ensureMeta();      // 补 color / pos
+        padRounds();
+        renderPlayers();
+        recordState();     // 房间模式下会推给服务端，所有人同步看到
+      }
+    }
+
+    // 页面权限 → 只读态：非房主且该区设为「仅房主」时，把对应区域变成查看模式
+    function applyPermUI(d) {
+      const hostOnly = area => d.inRoom && d.perm && d.perm[area] === 'host' && !d.isHost;
+      const ro = { draw: hostOnly('draw'), timer: hostOnly('timer'), score: hostOnly('score') };
+      document.body.classList.toggle('ro-draw', ro.draw);
+      document.body.classList.toggle('ro-timer', ro.timer);
+      document.body.classList.toggle('ro-score', ro.score);
+      const bn = (id, on, what) => {
+        const el = $t(id);
+        el.classList.toggle('on', on);
+        if (on) el.textContent = what + '由房主操作，你当前为查看模式；房主操作后所有人实时同步。';
+      };
+      bn('roDrawBanner', ro.draw, '抽词');
+      bn('roTimerBanner', ro.timer, '计时');
+      bn('roScoreBanner', ro.score, '计分');
+      // 每个页面标题旁的权限角标：所有人可操作 / 仅房主可操作（离线模式没有权限概念，隐藏）
+      const pb = (id, area) => {
+        const el = $t(id);
+        if (!d.inRoom || !d.perm) { el.style.display = 'none'; return; }
+        const hostOnlyPerm = d.perm[area] === 'host';
+        el.style.display = 'inline-block';
+        el.textContent = hostOnlyPerm ? '🔒 仅房主可操作' : '🔓 所有人可操作';
+        el.classList.toggle('host-only', hostOnlyPerm);
+      };
+      pb('permDraw', 'draw');
+      pb('permTimer', 'timer');
+      pb('permScore', 'score');
+      // 「只有房主能改」的控件（计时设置面板、加/删回合、玩家增删、撤销、清零…）：
+      // 用 inert 整块关掉 —— 不只是变淡，连键盘、长按、无障碍焦点都进不去。
+      // 纯查看的（翻回合、本回合/累计、排序、计分方法说明、全屏、屏幕常亮）不在名单里，始终可用。
+      document.querySelectorAll('[data-host]').forEach(el => {
+        const off = hostOnly(el.dataset.host);
+        el.classList.toggle('ro-off', off);
+        if ('inert' in el) el.inert = off;
+        else el.style.pointerEvents = off ? 'none' : '';
+      });
+      // 权限变了：悬浮计时条上的按钮要跟着从「暂停」变成「查看」
+      if (typeof updateMini === 'function') updateMini();
+      // 「提示音范围」只在 房间内 + 计时权限=仅房主 时出现（房主的设置项）
+      if (typeof updateSndRow === 'function') updateSndRow();
+    }
+
+    // 房主退出后房主身份会自动交给下一位：自己刚变成房主时提醒一下
+    let wasHost = null;
+    GPRoom.on('status', d => {
+      if (d.inRoom && wasHost === false && d.isHost) {
+        toast('👑 原房主已退出，你现在是新房主', 4500);
+      }
+      wasHost = d.inRoom ? d.isHost : null;
+      renderChip(d);
+      applyPermUI(d);
+      if (d.inRoom) {
+        ensureMemberPlayers();
+        if ($t('roomPopWrap').classList.contains('on')) renderPop();
+      } else if (typeof timerFollowOff === 'function') {
+        timerFollowOff();          // 离开房间：停止跟随，计时器回到纯本机
+      }
+      updateUndoBtns();
+      renderHomeRoom();
+    });
+    GPRoom.on('state', () => updateUndoBtns());
+    // 房间里别人操作了计时器 → 本机照着渲染（仅房主权限下非房主只能看）
+    GPRoom.on('timer', snap => {
+      if (typeof applyRemoteTimer === 'function') applyRemoteTimer(snap);
+    });
+
+    // 启动：探测服务；如果上次还在房间里，自动回去并直接进应用
+    GPRoom.init().then(() => {
+      if (GPRoom.inRoom) enterApp(true);
+    });
+  }
 
   // ---- 初始化：渲染计分板并建立撤销起点 ----
   renderPlayers();
