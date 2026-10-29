@@ -1,0 +1,9 @@
+{
+  "name": "gamepal",
+  "version": "3.3.0",
+  "private": true,
+  "description": "桌游助手：抽词器 / 游戏计时器 / 计分板（支持多人房间）",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
